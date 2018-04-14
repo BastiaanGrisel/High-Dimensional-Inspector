@@ -239,11 +239,13 @@ namespace hdi{
                 utils::secureLog(_logger,"Remove exaggeration...");
             }
 
-            if(_theta == 0){
+            if(_theta == 0) {
                 doAnIterationExact(mult);
-            }else{
-                doAnIterationBarnesHut(mult);
-            }
+            } else if(_params._weights.size() == getNumberOfDataPoints()) {
+                doAnIterationBarnesHutWeighted(mult);
+			} else {
+				doAnIterationBarnesHut(mult);
+			}
         }
 
         template <typename scalar, typename sparse_scalar_matrix>
@@ -274,12 +276,28 @@ namespace hdi{
         }
         template <typename scalar, typename sparse_scalar_matrix>
         void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::doAnIterationBarnesHut(double mult){
-            //Compute gradient of the KL function using the Barnes Hut approximation
+            // Compute gradient of the KL function using the Barnes Hut approximation
             computeBarnesHutGradient(exaggerationFactor());
 
             //Update the embedding based on the gradient
             updateTheEmbedding();
         }
+
+		template <typename scalar, typename sparse_scalar_matrix>
+		void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::doAnIterationBarnesHutWeighted(double mult) {
+			// Compute gradient of the KL function using the Barnes Hut approximation
+			computeBarnesHutGradient(exaggerationFactor());
+
+			// Scale the forces based on the weights of the data points
+			for (int i = 0; i < getNumberOfDataPoints(); i++) {
+				for (int j = 0; j < _params._embedding_dimensionality; j++) {
+					_gradient[i * _params._embedding_dimensionality + j] *= _params._weights[i];
+				}
+			}
+
+			//Update the embedding based on the gradient
+			updateTheEmbedding();
+		}
 		
         template <typename scalar, typename sparse_scalar_matrix>
         void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::computeLowDimensionalDistribution(){

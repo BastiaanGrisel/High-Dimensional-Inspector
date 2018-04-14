@@ -74,6 +74,7 @@ namespace hdi{
                 double _exaggeration_factor;                //! exaggeration factor for the attractive forces. Note: it shouldn't be too high when few points are used
                 unsigned int _remove_exaggeration_iter;     //! iterations with complete exaggeration of the attractive forces
                 unsigned int _exponential_decay_iter;       //! iterations required to remove the exaggeration using an exponential decay
+				std::vector<scalar_type> _weights;			//! weight for each data point
 			};
 
 
@@ -126,6 +127,8 @@ namespace hdi{
             void doAnIterationExact(double mult = 1);
             //! Do an iteration of the gradient descent
             void doAnIterationBarnesHut(double mult = 1);
+			//! Do an iteration of the gradient descent
+			void doAnIterationBarnesHutWeighted(double mult);
 			//! Compute Low-dimensional distribution
 			void computeLowDimensionalDistribution();
             //! Compute tSNE gradient with the exact algorithm
