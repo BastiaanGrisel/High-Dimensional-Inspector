@@ -116,6 +116,7 @@ namespace hdi{
 
             // Properties of this node in the tree
             SPTree* parent;
+			// Dimensionality of the embedding
             unsigned int _emb_dimension;
             bool is_leaf;
             unsigned int size;
@@ -172,8 +173,11 @@ namespace hdi{
 
         template <typename scalar_type>
         template <typename sparse_scalar_matrix>
+		// Positive Forces / Attractive Forces / F_attr
+		// sparse_scalar_matrix = std::vector<hdi::data::MapMemEff<uint32_t,float>>>, a list of Key Value pairs
         void SPTree<scalar_type>::computeEdgeForces(const sparse_scalar_matrix& sparse_matrix, hp_scalar_type multiplier, hp_scalar_type* pos_f)const{
-            const int n = sparse_matrix.size();
+            // Because of the way P is constructed, it only contains O(uN) elements where u is the perplexity. (more exact u * N * 3)
+			const int n = sparse_matrix.size();
 
             // Loop over all edges in the graph
 #ifdef __APPLE__
@@ -181,27 +185,42 @@ namespace hdi{
             dispatch_apply(n, dispatch_get_global_queue(0, 0), ^(size_t j) {
 #else
 #pragma omp parallel for
+			// Loop over all data points that have a non-zero P-value. Max iterations O(uN). 
             for(int j = 0; j < n; ++j) {
 #endif //__APPLE__
+				// Allocate buffer for distance computation
                 std::vector<hp_scalar_type> buff(_emb_dimension,0);
-                unsigned int ind1, ind2;
+
+				// Index of Yi
+				unsigned int ind1;
+
+				// Index of Yj
+				unsigned int ind2;
+
                 hp_scalar_type q_ij_1;
+
+				// Index of the first coordinate of Yi
                 ind1 = j * _emb_dimension;
-                for(auto elem: sparse_matrix[j]) {
+
+                for(auto elem: sparse_matrix[j]) { // j is the index of i, elem.first is the index of j, elem.second is p_ij
                     // Compute pairwise distance and Q-value
-                    q_ij_1 = 1.0;
-                    ind2 = elem.first * _emb_dimension;
-                    for(unsigned int d = 0; d < _emb_dimension; d++)
-                        buff[d] = _emb_positions[ind1 + d] - _emb_positions[ind2 + d]; //buff contains (yi-yj) per each _emb_dimension
-                    for(unsigned int d = 0; d < _emb_dimension; d++)
+                    q_ij_1 = 1.0; // q_ij = 1 + ||Yi - Yj||^2
+					
+                    ind2 = elem.first * _emb_dimension; // Index of the first coordinate of Yj
+                    
+					// Compute squared euclidean distance between Yi and Yj
+					for(unsigned int d = 0; d < _emb_dimension; d++)
+                        buff[d] = _emb_positions[ind1 + d] - _emb_positions[ind2 + d]; // buff contains (yi-yj) for each _emb_dimension
+                    
+					for(unsigned int d = 0; d < _emb_dimension; d++)
                         q_ij_1 += buff[d] * buff[d];
 
                     hp_scalar_type p_ij = elem.second;
-                    hp_scalar_type res = hp_scalar_type(p_ij) * multiplier / q_ij_1 / n;
+                    hp_scalar_type res = hp_scalar_type(p_ij) * multiplier / q_ij_1 / n; // Why n??
 
-                    // Sum positive force
+                    // Add the positive force to the existing force for every dimension in the embedding
                     for(unsigned int d = 0; d < _emb_dimension; d++)
-                      pos_f[ind1 + d] += res * buff[d] * multiplier; //(p_ij*q_j*mult) * (yi-yj)
+                      pos_f[ind1 + d] += res * buff[d] * multiplier; //(p_ij*q_ij*mult) * (yi-yj) (* mullt?)
                 }
             }
 #ifdef __APPLE__

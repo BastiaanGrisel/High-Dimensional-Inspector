@@ -404,7 +404,9 @@ namespace hdi{
                 cur_width = boundary->getWidth(d);
                 max_width = (max_width > cur_width) ? max_width : cur_width;
             }
-            if(is_leaf || max_width / sqrt(D) < theta) {
+
+            if(is_leaf || max_width / sqrt(D) < theta) { 
+				// Recursion stop condition
 
                 // Compute and add t-SNE force between point and current node
                 D = 1.0 / (1.0 + D);
@@ -413,8 +415,7 @@ namespace hdi{
 
                 mult *= D;
                 for(unsigned int d = 0; d < _emb_dimension; d++) neg_f[d] += mult * buff[d];
-            }
-            else {
+            } else {
 
                 // Recursively apply Barnes-Hut to children
                 for(unsigned int i = 0; i < no_children; i++) children[i]->computeNonEdgeForcesOMP(point_index, theta, neg_f, sum_Q);

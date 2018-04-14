@@ -354,27 +354,25 @@ namespace hdi{
         void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::computeBarnesHutGradient(double exaggeration){
             typedef double hp_scalar_type;
 
-            SPTree<scalar_type> sptree(_params._embedding_dimensionality,_embedding->getContainer().data(),getNumberOfDataPoints());
+			// Construct the spatial partitioning tree based on the data points in the embedding
+            SPTree<scalar_type> sptree(_params._embedding_dimensionality, _embedding->getContainer().data(), getNumberOfDataPoints());
 
             scalar_type sum_Q = .0;
-            std::vector<hp_scalar_type> positive_forces(getNumberOfDataPoints()*_params._embedding_dimensionality);
-            /*__block*/ std::vector<hp_scalar_type> negative_forces(getNumberOfDataPoints()*_params._embedding_dimensionality);
 
+			// Allocate force values for every data point and every dimension in the embedding
+            std::vector<hp_scalar_type> positive_forces(getNumberOfDataPoints()*_params._embedding_dimensionality);
+            std::vector<hp_scalar_type> negative_forces(getNumberOfDataPoints()*_params._embedding_dimensionality);
+
+			// Compute F_attr
             sptree.computeEdgeForces(_P, exaggeration, positive_forces.data());
 
-            /*__block*/ std::vector<hp_scalar_type> sum_Q_subvalues(getNumberOfDataPoints(),0);
-//#ifdef __APPLE__
-//            std::cout << "GCD dispatch, sparse_tsne_user_def_probabilities 365.\n";
-//            dispatch_apply(getNumberOfDataPoints(), dispatch_get_global_queue(0, 0), ^(size_t n) {
-//#else
+            std::vector<hp_scalar_type> sum_Q_subvalues(getNumberOfDataPoints(), 0);
+
             #pragma omp parallel for
             for(int n = 0; n < getNumberOfDataPoints(); n++){
-//#endif //__APPLE__
+				// Compute F_rep for each data point
                 sptree.computeNonEdgeForcesOMP(n, _theta, negative_forces.data() + n * _params._embedding_dimensionality, sum_Q_subvalues[n]);
             }
-//#ifdef __APPLE__
-//            );
-//#endif
 
             sum_Q = 0;
             for(int n = 0; n < getNumberOfDataPoints(); n++){
@@ -384,7 +382,6 @@ namespace hdi{
             for(int i = 0; i < _gradient.size(); i++){
                 _gradient[i] = positive_forces[i] - (negative_forces[i] / sum_Q);
             }
-
         }
 
 		//temp

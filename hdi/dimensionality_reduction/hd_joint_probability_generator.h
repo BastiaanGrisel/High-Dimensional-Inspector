@@ -97,7 +97,9 @@ namespace hdi{
             void computeProbabilityDistributions(/*const*/ scalar_type* high_dimensional_data, unsigned int num_dim, unsigned int num_dps, sparse_scalar_matrix& distribution, Parameters params = Parameters());
             void computeProbabilityDistributions(/*const*/ scalar_type* high_dimensional_data, unsigned int num_dim, unsigned int num_dps, std::vector<scalar_type>& probabilities, std::vector<int>& indices, Parameters params = Parameters());
             void computeProbabilityDistributionsFromDistanceMatrix(const std::vector<scalar_type>& squared_distance_matrix, unsigned int num_dps, sparse_scalar_matrix& distribution, Parameters params = Parameters());
-
+			
+			//! Compute the euclidean distances between points
+			void computeHighDimensionalDistances(/*const*/ scalar_type* high_dimensional_data, unsigned int num_dim, unsigned int num_dps, std::vector<scalar_type>& dsitances, std::vector<int>& indices, Parameters& params);
 
 			//! Return the current log
 			utils::AbstractLog* logger()const{return _logger;}
@@ -108,8 +110,8 @@ namespace hdi{
             const Statistics& statistics(){ return _statistics; }
 
         private:
-            //! Compute the euclidean distances between points
-            void computeHighDimensionalDistances(/*const*/ scalar_type* high_dimensional_data, unsigned int num_dim, unsigned int num_dps, std::vector<scalar_type>& dsitances, std::vector<int>& indices, Parameters& params);
+            ////! Compute the euclidean distances between points
+            //void computeHighDimensionalDistances(/*const*/ scalar_type* high_dimensional_data, unsigned int num_dim, unsigned int num_dps, std::vector<scalar_type>& dsitances, std::vector<int>& indices, Parameters& params);
             //! Compute a gaussian distribution for each data-point
             void computeGaussianDistributions(const std::vector<scalar_type>& dsitances, const std::vector<int>& indices, sparse_scalar_matrix& matrix, Parameters& params);
             //! Compute a gaussian distribution for each data-point
