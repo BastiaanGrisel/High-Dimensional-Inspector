@@ -157,7 +157,7 @@ int weighted_tsne::initialise_tsne(std::wstring data_path, int num_data_points, 
 		hdi::utils::CoutLog log;
 		hdi::dr::HDJointProbabilityGenerator<scalar_type> prob_gen;
 		hdi::dr::HDJointProbabilityGenerator<scalar_type>::sparse_scalar_matrix_type distributions;
-		hdi::dr::HDJointProbabilityGenerator<scalar_type>::Parameters prob_gen_param;
+		//hdi::dr::HDJointProbabilityGenerator<scalar_type>::Parameters prob_gen_param;
 		//hdi::dr::SparseTSNEUserDefProbabilities<scalar_type>::Parameters tSNE_param;
 		//hdi::data::Embedding<scalar_type> embedding;
 
