@@ -174,7 +174,7 @@ namespace hdi{
         template <typename scalar_type>
         template <typename sparse_scalar_matrix>
 		// Positive Forces / Attractive Forces / F_attr
-		// sparse_scalar_matrix = std::vector<hdi::data::MapMemEff<uint32_t,float>>>, a list of Key Value pairs
+		// sparse_scalar_matrix = std::vector<hdi::data::MapMemEff<uint32_t,float>>>, sparse_scalar_matrix is a list of lists containing int->float pairs
         void SPTree<scalar_type>::computeEdgeForces(const sparse_scalar_matrix& sparse_matrix, hp_scalar_type multiplier, hp_scalar_type* pos_f)const{
             // Because of the way P is constructed, it only contains O(uN) elements where u is the perplexity. (more exact u * N * 3)
 			const int n = sparse_matrix.size();

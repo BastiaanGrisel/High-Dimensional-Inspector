@@ -14,6 +14,8 @@
 #include <QCommandLineOption>
 #include <QIcon>
 
+#include <omp.h>
+
 #include <iostream>
 #include <fstream>
 #include <stdio.h>

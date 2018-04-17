@@ -74,7 +74,7 @@ namespace hdi{
                 double _exaggeration_factor;                //! exaggeration factor for the attractive forces. Note: it shouldn't be too high when few points are used
                 unsigned int _remove_exaggeration_iter;     //! iterations with complete exaggeration of the attractive forces
                 unsigned int _exponential_decay_iter;       //! iterations required to remove the exaggeration using an exponential decay
-				std::vector<scalar_type> _weights;			//! weight for each data point
+				std::vector<scalar_type> _point_weights;	//! list of weights for each point
 			};
 
 
@@ -89,6 +89,7 @@ namespace hdi{
 			//! Reset the class and remove all the data points
 			void clear();
 			
+			void updateWeights(std::vector<scalar_type> w);
 
 			//! Get the position in the embedding for a data point
 			void getEmbeddingPosition(scalar_vector_type& embedding_position, data_handle_type handle)const;

@@ -209,11 +209,12 @@ int weighted_tsne::initialise_tsne(std::wstring data_path, int num_data_points, 
 		hdi::utils::secureLogValue(&log, "Similarities computation (sec)", similarities_comp_time);
 		//hdi::utils::secureLogValue(&log, "Gradient descent (sec)", gradient_desc_comp_time);
 		//hdi::utils::secureLogValue(&log, "Data saving (sec)", data_saving_time);
-
+		return 0;
 	}
 	catch (std::logic_error& ex) { std::cout << "Logic error: " << ex.what() << std::endl; }
 	catch (std::runtime_error& ex) { std::cout << "Runtime error: " << ex.what() << std::endl; }
 	catch (...) { std::cout << "An unknown error occurred" << std::endl;; }
+	return 1;
 }
 
 void weighted_tsne::do_iteration() {

@@ -241,7 +241,7 @@ namespace hdi{
 
             if(_theta == 0) {
                 doAnIterationExact(mult);
-            } else if(_params._weights.size() == getNumberOfDataPoints()) {
+            } else if(_params._point_weights.size() == getNumberOfDataPoints()) {
                 doAnIterationBarnesHutWeighted(mult);
 			} else {
 				doAnIterationBarnesHut(mult);
@@ -291,7 +291,7 @@ namespace hdi{
 			// Scale the forces based on the weights of the data points
 			for (int i = 0; i < getNumberOfDataPoints(); i++) {
 				for (int j = 0; j < _params._embedding_dimensionality; j++) {
-					_gradient[i * _params._embedding_dimensionality + j] *= _params._weights[i];
+					_gradient[i * _params._embedding_dimensionality + j] *= _params._point_weights[i];
 				}
 			}
 
@@ -433,6 +433,11 @@ namespace hdi{
         double SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::computeKullbackLeiblerDivergence(){
             assert(false);
 			return 0;
+		}
+
+		template <typename scalar, typename sparse_scalar_matrix>
+		void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::updateWeights(std::vector<scalar_type> w) {
+			_params._point_weights = w;
 		}
 	}
 }
