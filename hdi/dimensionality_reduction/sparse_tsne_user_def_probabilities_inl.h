@@ -34,6 +34,7 @@
 #ifndef SPARSE_TSNE_USER_DEF_PROBABILITIES_INL
 #define SPARSE_TSNE_USER_DEF_PROBABILITIES_INL
 
+#include "hdi/data/map_mem_eff.h"
 #include "hdi/dimensionality_reduction/sparse_tsne_user_def_probabilities.h"
 #include "hdi/utils/math_utils.h"
 #include "hdi/utils/log_helper_functions.h"
@@ -241,7 +242,7 @@ namespace hdi{
 
             if(_theta == 0) {
                 doAnIterationExact(mult);
-            } else if(_params._point_weights.size() == getNumberOfDataPoints()) {
+            } else if(_params._weighted) {
                 doAnIterationBarnesHutWeighted(mult);
 			} else {
 				doAnIterationBarnesHut(mult);
@@ -289,11 +290,11 @@ namespace hdi{
 			computeBarnesHutGradient(exaggerationFactor());
 
 			// Scale the forces based on the weights of the data points
-			for (int i = 0; i < getNumberOfDataPoints(); i++) {
-				for (int j = 0; j < _params._embedding_dimensionality; j++) {
-					_gradient[i * _params._embedding_dimensionality + j] *= _params._point_weights[i];
-				}
-			}
+			//for (int i = 0; i < getNumberOfDataPoints(); i++) {
+			//	for (int j = 0; j < _params._embedding_dimensionality; j++) {
+			//		_gradient[i * _params._embedding_dimensionality + j] *= _params._connection_weights[i];
+			//	}
+			//}
 
 			//Update the embedding based on the gradient
 			updateTheEmbedding();
@@ -382,7 +383,7 @@ namespace hdi{
             std::vector<hp_scalar_type> negative_forces(getNumberOfDataPoints()*_params._embedding_dimensionality);
 
 			// Compute F_attr
-            sptree.computeEdgeForces(_P, exaggeration, positive_forces.data());
+            sptree.computeEdgeForces(_P, _connection_weights, exaggeration, positive_forces.data());
 
             std::vector<hp_scalar_type> sum_Q_subvalues(getNumberOfDataPoints(), 0);
 
@@ -436,8 +437,8 @@ namespace hdi{
 		}
 
 		template <typename scalar, typename sparse_scalar_matrix>
-		void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::updateWeights(std::vector<scalar_type> w) {
-			_params._point_weights = w;
+		void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::setWeights(std::vector<scalar_type> w) {
+			_connection_weights = w;
 		}
 	}
 }

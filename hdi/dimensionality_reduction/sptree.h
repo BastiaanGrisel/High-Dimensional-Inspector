@@ -157,7 +157,7 @@ namespace hdi{
             void computeEdgeForces(unsigned int* row_P, unsigned int* col_P, hp_scalar_type* val_P, hp_scalar_type sum_P, int N, hp_scalar_type* pos_f)const;
 
             template <typename sparse_scalar_matrix>
-            void computeEdgeForces(const sparse_scalar_matrix& matrix, hp_scalar_type multiplier, hp_scalar_type* pos_f)const;
+            void computeEdgeForces(const sparse_scalar_matrix& matrix, std::vector<scalar_type> weights, hp_scalar_type multiplier, hp_scalar_type* pos_f)const;
 
             void print();
 
@@ -175,8 +175,7 @@ namespace hdi{
         template <typename sparse_scalar_matrix>
 		// Positive Forces / Attractive Forces / F_attr
 		// sparse_scalar_matrix = std::vector<hdi::data::MapMemEff<uint32_t,float>>>, sparse_scalar_matrix is a list of lists containing int->float pairs
-        void SPTree<scalar_type>::computeEdgeForces(const sparse_scalar_matrix& sparse_matrix, hp_scalar_type multiplier, hp_scalar_type* pos_f)const{
-            // Because of the way P is constructed, it only contains O(uN) elements where u is the perplexity. (more exact u * N * 3)
+        void SPTree<scalar_type>::computeEdgeForces(const sparse_scalar_matrix& sparse_matrix, std::vector<scalar_type> weights, hp_scalar_type multiplier, hp_scalar_type* pos_f)const{
 			const int n = sparse_matrix.size();
 
             // Loop over all edges in the graph
@@ -185,7 +184,7 @@ namespace hdi{
             dispatch_apply(n, dispatch_get_global_queue(0, 0), ^(size_t j) {
 #else
 #pragma omp parallel for
-			// Loop over all data points that have a non-zero P-value. Max iterations O(uN). 
+			// Loop over all data points
             for(int j = 0; j < n; ++j) {
 #endif //__APPLE__
 				// Allocate buffer for distance computation
@@ -202,7 +201,8 @@ namespace hdi{
 				// Index of the first coordinate of Yi
                 ind1 = j * _emb_dimension;
 
-                for(auto elem: sparse_matrix[j]) { // j is the index of i, elem.first is the index of j, elem.second is p_ij
+				// Loop over all non-zero connections from data point j
+                for(auto elem: sparse_matrix[j]) { // j is the index of i, elem.first is the index of j, elem.second is the value p_ij
                     // Compute pairwise distance and Q-value
                     q_ij_1 = 1.0; // q_ij = 1 + ||Yi - Yj||^2
 					
@@ -218,9 +218,23 @@ namespace hdi{
                     hp_scalar_type p_ij = elem.second;
                     hp_scalar_type res = hp_scalar_type(p_ij) * multiplier / q_ij_1 / n; // Why n??
 
+					// Fetch the weight value for this connection
+					float weight = weights[j * n + elem.first];
+					
+		/*			float weight = 1;
+					for (auto it : weights[j].find(elem.first)) {
+						weight = it;
+						break;
+					}*/
+
+			/*		MapMemEff::const_iterator it = weights[i].find(elem.first);
+
+					float weight = weights.size() > 0 ? weights[j][elem.first] : 1;*/
+					//float weight = 1;
+
                     // Add the positive force to the existing force for every dimension in the embedding
                     for(unsigned int d = 0; d < _emb_dimension; d++)
-                      pos_f[ind1 + d] += res * buff[d] * multiplier; //(p_ij*q_ij*mult) * (yi-yj) (* mullt?)
+                      pos_f[ind1 + d] += weight * res * buff[d] * multiplier; //(p_ij*q_ij*mult) * (yi-yj) (* mullt?)
                 }
             }
 #ifdef __APPLE__

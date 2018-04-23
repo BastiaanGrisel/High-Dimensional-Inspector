@@ -20,8 +20,18 @@ void test_create_embedding() {
 
 	wt->initialise_tsne(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-1k.bin", N, input_dims);
 
+	std::vector<scalar_type> weights;
+	weights.resize(N * N);
+
+	// Set all weights to 1
+	for (int ij = 0; ij < N * N; ij++) {
+		weights[ij] = 1;
+	}
+
+	wt->tSNE.setWeights(weights);
+
 	// Do iterations
-	for (int i = 0; i < 2000; i++) {
+	for (int i = 0; i < 500; i++) {
 		if(i % 100 == 0)
 			hdi::utils::secureLogValue(&log, "Iteration", i);
 
@@ -31,44 +41,45 @@ void test_create_embedding() {
 	hdi::utils::secureLog(&log, "Done with first iterations");
 
 	// Select points in square around center
-	std::vector<int> selectedIndices;
-	float width, height;
-	width = height = 0.7;
+	//std::vector<int> selectedIndices;
+	//float width, height;
+	//width = height = 0.7;
 
-	for (int i = 0; i < N; i++) {
-		if (wt->embedding.getContainer()[i * output_dims] < width && wt->embedding.getContainer()[i * output_dims + 1] < height) {
-			selectedIndices.push_back(i);
-		}
-	}
+	//for (int i = 0; i < N; i++) {
+	//	if (wt->embedding.getContainer()[i * output_dims] < width && wt->embedding.getContainer()[i * output_dims + 1] < height) {
+	//		selectedIndices.push_back(i);
+	//	}
+	//}
 
-	// Save selected indices to CSV
-	std::ofstream out_file("C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/selected.csv");
+	//// Save selected indices to CSV
+	//std::ofstream out_file("C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/selected.csv");
 
-	for (int i = 0; i < selectedIndices.size(); i++) {
-		out_file << std::to_string(selectedIndices[i]) << std::endl;
-	}
+	//for (int i = 0; i < selectedIndices.size(); i++) {
+	//	out_file << std::to_string(selectedIndices[i]) << std::endl;
+	//}
 
-	out_file.close();
+	//out_file.close();
 
 	// Set weights
-	std::vector<scalar_type> weights;
-	weights.resize(N);
+	//hdi::dr::HDJointProbabilityGenerator<scalar_type>::sparse_scalar_matrix_type weights;
+	//std::vector<scalar_type> weights;
+	//weights.resize(N * N);
+
+	// Set a weight for one selected point
+	int selectedpoint = 10;
 
 	for (int i = 0; i < N; i++) {
-		weights[i] = 0.00001;
+		for (int j = 0; j < N; j++) {
+			weights[i * N + j] = (i == selectedpoint || j == selectedpoint) ? 1 : 0.1;
+		}
 	}
-
-	for (int index : selectedIndices) {
-		weights[index] = 1;
-	}
-
-	//wt->tSNE_param._point_weights = weights;
-	wt->tSNE.updateWeights(weights);
+	
+	wt->tSNE.setWeights(weights);
 
 	hdi::utils::secureLog(&log, "Weights are set");
 
 	// Do iterations
-	for (int i = 0; i < 2000; i++) {
+	for (int i = 0; i < 500; i++) {
 		if (i % 100 == 0)
 			hdi::utils::secureLogValue(&log, "Iteration", i);
 
@@ -78,7 +89,7 @@ void test_create_embedding() {
 	// Save as CSV
 	std::vector<scalar_type> res = wt->embedding.getContainer();
 
-	std::ofstream out_file("C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding.csv");
+	std::ofstream out_file2("C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding.csv");
 
 	for (int i = 0; i < N; i++) {
 		std::string line = "";
@@ -92,10 +103,10 @@ void test_create_embedding() {
 			}
 		}
 
-		out_file << line << std::endl;
+		out_file2 << line << std::endl;
 	}
 
-	out_file.close();
+	out_file2.close();
 
 	delete wt;
 }
