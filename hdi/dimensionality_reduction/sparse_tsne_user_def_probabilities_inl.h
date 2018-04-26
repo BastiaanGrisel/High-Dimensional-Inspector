@@ -242,8 +242,6 @@ namespace hdi{
 
             if(_theta == 0) {
                 doAnIterationExact(mult);
-            } else if(_params._weighted) {
-                doAnIterationBarnesHutWeighted(mult);
 			} else {
 				doAnIterationBarnesHut(mult);
 			}
@@ -283,22 +281,6 @@ namespace hdi{
             //Update the embedding based on the gradient
             updateTheEmbedding();
         }
-
-		template <typename scalar, typename sparse_scalar_matrix>
-		void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::doAnIterationBarnesHutWeighted(double mult) {
-			// Compute gradient of the KL function using the Barnes Hut approximation
-			computeBarnesHutGradient(exaggerationFactor());
-
-			// Scale the forces based on the weights of the data points
-			//for (int i = 0; i < getNumberOfDataPoints(); i++) {
-			//	for (int j = 0; j < _params._embedding_dimensionality; j++) {
-			//		_gradient[i * _params._embedding_dimensionality + j] *= _params._connection_weights[i];
-			//	}
-			//}
-
-			//Update the embedding based on the gradient
-			updateTheEmbedding();
-		}
 		
         template <typename scalar, typename sparse_scalar_matrix>
         void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::computeLowDimensionalDistribution(){
@@ -346,12 +328,14 @@ namespace hdi{
 				}
 			}
 
+			// For all connections starting at point i
 			for(int i = 0; i < n; ++i){
+				// And ending at point j
 				for(int j = 0; j < n; ++j){
 					for(int d = 0; d < dim; ++d){
 						const int idx = i*n + j;
                         const double distance((*_embedding_container)[i * dim + d] - (*_embedding_container)[j * dim + d]);
-						const double negative(_Q[idx] * _Q[idx] / _normalization_Q * distance);
+						const double negative(_connection_weights[idx] * _Q[idx] * _Q[idx] / _normalization_Q * distance);
 						_gradient[i * dim + d] += static_cast<scalar_type>(-4*negative);
 					}
 				}
@@ -362,7 +346,7 @@ namespace hdi{
                         const double distance((*_embedding_container)[i * dim + d] - (*_embedding_container)[j * dim + d]);
 						double p_ij = elem.second/n;
 						
-						const double positive(p_ij * _Q[idx] * distance);
+						const double positive(_connection_weights[idx] * p_ij * _Q[idx] * distance);
 						_gradient[i * dim + d] += static_cast<scalar_type>(4*exaggeration*positive);
 					}
 				}
@@ -390,7 +374,7 @@ namespace hdi{
             #pragma omp parallel for
             for(int n = 0; n < getNumberOfDataPoints(); n++){
 				// Compute F_rep for each data point
-                sptree.computeNonEdgeForcesOMP(n, _theta, negative_forces.data() + n * _params._embedding_dimensionality, sum_Q_subvalues[n]);
+                sptree.computeNonEdgeForcesOMP(n, _theta, negative_forces.data() + n * _params._embedding_dimensionality, sum_Q_subvalues[n], _connection_weights);
             }
 
             sum_Q = 0;
@@ -437,7 +421,7 @@ namespace hdi{
 		}
 
 		template <typename scalar, typename sparse_scalar_matrix>
-		void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::setWeights(std::vector<scalar_type> w) {
+		void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::setWeights(std::vector<scalar_type> &w) {
 			_connection_weights = w;
 		}
 	}

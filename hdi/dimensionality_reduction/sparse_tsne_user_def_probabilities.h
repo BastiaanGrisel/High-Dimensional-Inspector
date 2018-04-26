@@ -74,7 +74,6 @@ namespace hdi{
                 double _exaggeration_factor;                //! exaggeration factor for the attractive forces. Note: it shouldn't be too high when few points are used
                 unsigned int _remove_exaggeration_iter;     //! iterations with complete exaggeration of the attractive forces
                 unsigned int _exponential_decay_iter;       //! iterations required to remove the exaggeration using an exponential decay
-				bool _weighted = true;						//! Should the connection weights be used?
 			};
 
 
@@ -89,7 +88,7 @@ namespace hdi{
 			//! Reset the class and remove all the data points
 			void clear();
 			
-			void setWeights(std::vector<scalar_type> w);
+			void setWeights(std::vector<scalar_type> &w);
 
 			//! Get the position in the embedding for a data point
 			void getEmbeddingPosition(scalar_vector_type& embedding_position, data_handle_type handle)const;
@@ -128,8 +127,6 @@ namespace hdi{
             void doAnIterationExact(double mult = 1);
             //! Do an iteration of the gradient descent
             void doAnIterationBarnesHut(double mult = 1);
-			//! Do an iteration of the gradient descent
-			void doAnIterationBarnesHutWeighted(double mult);
 			//! Compute Low-dimensional distribution
 			void computeLowDimensionalDistribution();
             //! Compute tSNE gradient with the exact algorithm

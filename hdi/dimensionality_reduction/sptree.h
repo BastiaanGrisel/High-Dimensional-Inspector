@@ -152,7 +152,7 @@ namespace hdi{
             void rebuildTree();
             void getAllIndices(unsigned int* indices);
             unsigned int getDepth();
-            void computeNonEdgeForcesOMP(unsigned int point_index, hp_scalar_type theta, hp_scalar_type neg_f[], hp_scalar_type& sum_Q)const;
+            void computeNonEdgeForcesOMP(unsigned int point_index, hp_scalar_type theta, hp_scalar_type neg_f[], hp_scalar_type& sum_Q, std::vector<scalar_type> weights)const;
             void computeNonEdgeForces(unsigned int point_index, hp_scalar_type theta, hp_scalar_type neg_f[], hp_scalar_type* sum_Q)const;
             void computeEdgeForces(unsigned int* row_P, unsigned int* col_P, hp_scalar_type* val_P, hp_scalar_type sum_P, int N, hp_scalar_type* pos_f)const;
 

@@ -385,7 +385,7 @@ namespace hdi{
 
         // Compute non-edge forces using Barnes-Hut algorithm
         template <typename scalar_type>
-        void SPTree<scalar_type>::computeNonEdgeForcesOMP(unsigned int point_index, hp_scalar_type theta, hp_scalar_type neg_f[], hp_scalar_type& sum_Q)const
+        void SPTree<scalar_type>::computeNonEdgeForcesOMP(unsigned int point_index, hp_scalar_type theta, hp_scalar_type neg_f[], hp_scalar_type& sum_Q, std::vector<scalar_type> weights)const
         {
             std::vector<hp_scalar_type> buff(_emb_dimension,0);
             // Make sure that we spend no time on empty nodes or self-interactions
@@ -418,7 +418,7 @@ namespace hdi{
             } else {
 
                 // Recursively apply Barnes-Hut to children
-                for(unsigned int i = 0; i < no_children; i++) children[i]->computeNonEdgeForcesOMP(point_index, theta, neg_f, sum_Q);
+                for(unsigned int i = 0; i < no_children; i++) children[i]->computeNonEdgeForcesOMP(point_index, theta, neg_f, sum_Q, weights);
             }
         }
 

@@ -19,6 +19,7 @@
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
+#include <math.h>
 
 typedef float scalar_type;
 
