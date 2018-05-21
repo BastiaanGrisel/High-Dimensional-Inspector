@@ -121,6 +121,10 @@ namespace hdi{
             bool is_leaf;
             unsigned int size;
             unsigned int cum_size;
+			
+			// Cumulative weight of points in this cell
+			scalar_type cum_weight;
+			std::vector<scalar_type> point_weights; // Reference to weights of the data points
 
             // Axis-aligned bounding box stored as a center with half-_emb_dimensions to represent the boundaries of this quad tree
             Cell* boundary;
@@ -135,7 +139,8 @@ namespace hdi{
             unsigned int no_children;
 
         public:
-            SPTree(unsigned int D, scalar_type* inp_data, unsigned int N);
+            //SPTree(unsigned int D, scalar_type* inp_data, unsigned int N);
+			SPTree(unsigned int D, scalar_type* inp_data, unsigned int N, std::vector<scalar_type> point_weights);
         private:
             SPTree(unsigned int D, scalar_type* inp_data, hp_scalar_type* inp_corner, hp_scalar_type* inp_width);
             SPTree(unsigned int D, scalar_type* inp_data, unsigned int N, hp_scalar_type* inp_corner, hp_scalar_type* inp_width);
@@ -152,12 +157,12 @@ namespace hdi{
             void rebuildTree();
             void getAllIndices(unsigned int* indices);
             unsigned int getDepth();
-            void computeNonEdgeForcesOMP(unsigned int point_index, hp_scalar_type theta, hp_scalar_type neg_f[], hp_scalar_type& sum_Q, std::vector<scalar_type> weights)const;
+            void computeNonEdgeForcesOMP(unsigned int point_index, hp_scalar_type theta, hp_scalar_type neg_f[], hp_scalar_type& sum_Q)const;
             void computeNonEdgeForces(unsigned int point_index, hp_scalar_type theta, hp_scalar_type neg_f[], hp_scalar_type* sum_Q)const;
             void computeEdgeForces(unsigned int* row_P, unsigned int* col_P, hp_scalar_type* val_P, hp_scalar_type sum_P, int N, hp_scalar_type* pos_f)const;
 
             template <typename sparse_scalar_matrix>
-            void computeEdgeForces(const sparse_scalar_matrix& matrix, std::vector<scalar_type> weights, hp_scalar_type multiplier, hp_scalar_type* pos_f)const;
+            void computeEdgeForces(const sparse_scalar_matrix& matrix, hp_scalar_type multiplier, hp_scalar_type* pos_f)const;
 
             void print();
 
@@ -175,8 +180,8 @@ namespace hdi{
         template <typename sparse_scalar_matrix>
 		// Positive Forces / Attractive Forces / F_attr
 		// sparse_scalar_matrix = std::vector<hdi::data::MapMemEff<uint32_t,float>>>, sparse_scalar_matrix is a list of lists containing int->float pairs
-        void SPTree<scalar_type>::computeEdgeForces(const sparse_scalar_matrix& sparse_matrix, std::vector<scalar_type> weights, hp_scalar_type multiplier, hp_scalar_type* pos_f)const{
-			const int n = sparse_matrix.size();
+        void SPTree<scalar_type>::computeEdgeForces(const sparse_scalar_matrix& sparse_matrix, hp_scalar_type exaggeration, hp_scalar_type* pos_f)const{
+			const int n = sparse_matrix.size(); // n is the total number of data points
 
             // Loop over all edges in the graph
 #ifdef __APPLE__
@@ -216,25 +221,16 @@ namespace hdi{
                         q_ij_1 += buff[d] * buff[d];
 
                     hp_scalar_type p_ij = elem.second;
-                    hp_scalar_type res = hp_scalar_type(p_ij) * multiplier / q_ij_1 / n; // Why n??
+                    //hp_scalar_type res = hp_scalar_type(p_ij) * exaggeration / q_ij_1 / n; // Why n??
+					hp_scalar_type res = hp_scalar_type(p_ij) * exaggeration / q_ij_1 / n; // Why n??
 
 					// Fetch the weight value for this connection
-					float weight = weights[j * n + elem.first];
-					
-		/*			float weight = 1;
-					for (auto it : weights[j].find(elem.first)) {
-						weight = it;
-						break;
-					}*/
-
-			/*		MapMemEff::const_iterator it = weights[i].find(elem.first);
-
-					float weight = weights.size() > 0 ? weights[j][elem.first] : 1;*/
-					//float weight = 1;
+					//float weight = point_weights[j * n + elem.first];
+					//float weight = point_weights[j] * point_weights[elem.first];
 
                     // Add the positive force to the existing force for every dimension in the embedding
                     for(unsigned int d = 0; d < _emb_dimension; d++)
-                      pos_f[ind1 + d] += weight * res * buff[d] * multiplier; //(p_ij*q_ij*mult) * (yi-yj) (* mullt?)
+                      pos_f[ind1 + d] += res * buff[d]; // (p_ij * (y_i - y_j)) / (1 + ||y_i - y_j||^2)
                 }
             }
 #ifdef __APPLE__

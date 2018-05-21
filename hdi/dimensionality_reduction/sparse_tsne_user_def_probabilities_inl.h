@@ -335,7 +335,7 @@ namespace hdi{
 					for(int d = 0; d < dim; ++d){
 						const int idx = i*n + j;
                         const double distance((*_embedding_container)[i * dim + d] - (*_embedding_container)[j * dim + d]);
-						const double negative(_connection_weights[idx] * _Q[idx] * _Q[idx] / _normalization_Q * distance);
+						const double negative(_point_weights[i] * _point_weights[j] * _Q[idx] * _Q[idx] / _normalization_Q * distance);
 						_gradient[i * dim + d] += static_cast<scalar_type>(-4*negative);
 					}
 				}
@@ -346,7 +346,7 @@ namespace hdi{
                         const double distance((*_embedding_container)[i * dim + d] - (*_embedding_container)[j * dim + d]);
 						double p_ij = elem.second/n;
 						
-						const double positive(_connection_weights[idx] * p_ij * _Q[idx] * distance);
+						const double positive(_point_weights[i] * _point_weights[j] * p_ij * _Q[idx] * distance);
 						_gradient[i * dim + d] += static_cast<scalar_type>(4*exaggeration*positive);
 					}
 				}
@@ -358,7 +358,7 @@ namespace hdi{
             typedef double hp_scalar_type;
 
 			// Construct the spatial partitioning tree based on the data points in the embedding
-            SPTree<scalar_type> sptree(_params._embedding_dimensionality, _embedding->getContainer().data(), getNumberOfDataPoints());
+            SPTree<scalar_type> sptree(_params._embedding_dimensionality, _embedding->getContainer().data(), getNumberOfDataPoints(), _point_weights);
 
             scalar_type sum_Q = .0;
 
@@ -367,14 +367,14 @@ namespace hdi{
             std::vector<hp_scalar_type> negative_forces(getNumberOfDataPoints()*_params._embedding_dimensionality);
 
 			// Compute F_attr
-            sptree.computeEdgeForces(_P, _connection_weights, exaggeration, positive_forces.data());
+            sptree.computeEdgeForces(_P, exaggeration, positive_forces.data());
 
             std::vector<hp_scalar_type> sum_Q_subvalues(getNumberOfDataPoints(), 0);
 
             #pragma omp parallel for
             for(int n = 0; n < getNumberOfDataPoints(); n++){
-				// Compute F_rep for each data point
-                sptree.computeNonEdgeForcesOMP(n, _theta, negative_forces.data() + n * _params._embedding_dimensionality, sum_Q_subvalues[n], _connection_weights);
+				// Compute F_rep * Z for each data point
+                sptree.computeNonEdgeForcesOMP(n, _theta, negative_forces.data() + n * _params._embedding_dimensionality, sum_Q_subvalues[n]);
             }
 
             sum_Q = 0;
@@ -383,7 +383,7 @@ namespace hdi{
             }
 
             for(int i = 0; i < _gradient.size(); i++){
-                _gradient[i] = positive_forces[i] - (negative_forces[i] / sum_Q);
+                _gradient[i] = positive_forces[i] - (negative_forces[i] / sum_Q); // F_attr - ((F_rep * Z) / Z)
             }
         }
 
@@ -422,7 +422,7 @@ namespace hdi{
 
 		template <typename scalar, typename sparse_scalar_matrix>
 		void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::setWeights(std::vector<scalar_type> &w) {
-			_connection_weights = w;
+			_point_weights = w;
 		}
 	}
 }

@@ -158,7 +158,7 @@ namespace hdi{
 			Parameters _params;
 			unsigned int _iteration;
 
-			std::vector<scalar_type> _connection_weights;
+			std::vector<scalar_type> _point_weights;
 
 			utils::AbstractLog* _logger;
 	

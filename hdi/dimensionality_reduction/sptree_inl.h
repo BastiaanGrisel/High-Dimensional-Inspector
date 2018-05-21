@@ -135,7 +135,7 @@ namespace hdi{
 
         //! Default constructor for SPTree -- build tree, too!
         template <typename scalar_type>
-        SPTree<scalar_type>::SPTree(unsigned int D, scalar_type* inp_data, unsigned int N){
+        SPTree<scalar_type>::SPTree(unsigned int D, scalar_type* inp_data, unsigned int N, std::vector<scalar_type> weights){
             // Compute mean, width, and height of current map (boundaries of SPTree)
             hp_scalar_type* mean_Y = (hp_scalar_type*) malloc(D * sizeof(hp_scalar_type)); for(unsigned int d = 0; d < D; d++) mean_Y[d] = .0;
             hp_scalar_type*  min_Y = (hp_scalar_type*) malloc(D * sizeof(hp_scalar_type)); for(unsigned int d = 0; d < D; d++)  min_Y[d] =  DBL_MAX;
@@ -148,6 +148,9 @@ namespace hdi{
                 }
             }
             for(int d = 0; d < D; d++) mean_Y[d] /= (hp_scalar_type) N;
+
+			// Set weights
+			point_weights = weights;
 
             // Construct SPTree
             hp_scalar_type* width = (hp_scalar_type*) malloc(D * sizeof(hp_scalar_type));
@@ -201,6 +204,11 @@ namespace hdi{
             is_leaf = true;
             size = 0;
             cum_size = 0;
+			cum_weight = 0;
+
+			if (inp_parent != NULL) {
+				point_weights = inp_parent->point_weights;
+			}
 
             boundary = new Cell(_emb_dimension);
             for(unsigned int d = 0; d < D; d++) boundary->setCorner(d, inp_corner[d]);
@@ -211,7 +219,7 @@ namespace hdi{
 
             _center_of_mass = (hp_scalar_type*) malloc(D * sizeof(hp_scalar_type));
             for(unsigned int d = 0; d < D; d++) _center_of_mass[d] = .0;
-            //buff = (hp_scalar_type*) malloc(D * sizeof(hp_scalar_type));
+            //distance = (hp_scalar_type*) malloc(sq_distance * sizeof(hp_scalar_type));
         }
 
         // Destructor for SPTree
@@ -223,7 +231,7 @@ namespace hdi{
             }
             free(children);
             free(_center_of_mass);
-            //free(buff);
+            //free(distance);
             delete boundary;
         }
 
@@ -258,6 +266,9 @@ namespace hdi{
                 hp_scalar_type mult2 = 1.0 / (hp_scalar_type) cum_size;
                 for(unsigned int d = 0; d < _emb_dimension; d++) _center_of_mass[d] *= mult1;
                 for(unsigned int d = 0; d < _emb_dimension; d++) _center_of_mass[d] += mult2 * point[d];
+
+				// Update the cumulative weight of this cell
+				cum_weight += point_weights[new_index];
 
                 // If there is space in this quad tree and it is a leaf, add the object here
                 if(is_leaf && size < QT_NODE_CAPACITY) {
@@ -385,17 +396,17 @@ namespace hdi{
 
         // Compute non-edge forces using Barnes-Hut algorithm
         template <typename scalar_type>
-        void SPTree<scalar_type>::computeNonEdgeForcesOMP(unsigned int point_index, hp_scalar_type theta, hp_scalar_type neg_f[], hp_scalar_type& sum_Q, std::vector<scalar_type> weights)const
+        void SPTree<scalar_type>::computeNonEdgeForcesOMP(unsigned int point_index, hp_scalar_type theta, hp_scalar_type neg_f[], hp_scalar_type& sum_Q)const
         {
-            std::vector<hp_scalar_type> buff(_emb_dimension,0);
+            std::vector<hp_scalar_type> distance(_emb_dimension,0);
             // Make sure that we spend no time on empty nodes or self-interactions
             if(cum_size == 0 || (is_leaf && size == 1 && index[0] == point_index)) return;
 
-            // Compute distance between point and center-of-mass
-            hp_scalar_type D = .0;
+            // Compute squared distance between point and center-of-mass
+            hp_scalar_type sq_distance = .0;
             unsigned int ind = point_index * _emb_dimension;
-            for(unsigned int d = 0; d < _emb_dimension; d++) buff[d] = _emb_positions[ind + d] - _center_of_mass[d];
-            for(unsigned int d = 0; d < _emb_dimension; d++) D += buff[d] * buff[d];
+            for(unsigned int d = 0; d < _emb_dimension; d++) distance[d] = _emb_positions[ind + d] - _center_of_mass[d];
+            for(unsigned int d = 0; d < _emb_dimension; d++) sq_distance += distance[d] * distance[d];
 
             // Check whether we can use this node as a "summary"
             hp_scalar_type max_width = 0.0;
@@ -405,20 +416,43 @@ namespace hdi{
                 max_width = (max_width > cur_width) ? max_width : cur_width;
             }
 
-            if(is_leaf || max_width / sqrt(D) < theta) { 
-				// Recursion stop condition
+            if(is_leaf || max_width / sqrt(sq_distance) < theta) {  // If we use this cell as a summary (recursion stop-condition)
 
-                // Compute and add t-SNE force between point and current node
-                D = 1.0 / (1.0 + D);
-                hp_scalar_type mult = cum_size * D;
-                sum_Q += mult;
+				// Compute and add t-SNE force between point and current node
+				float q_i_cell_Z = 1.0 / (1.0 + sq_distance);
+				hp_scalar_type mult = cum_size * q_i_cell_Z;
+				sum_Q += mult;
 
-                mult *= D;
-                for(unsigned int d = 0; d < _emb_dimension; d++) neg_f[d] += mult * buff[d];
+				mult *= q_i_cell_Z;
+				for (unsigned int d = 0; d < _emb_dimension; d++) neg_f[d] += mult * distance[d];
+				
+				// Start code Bastiaan
+
+
+//				// Calculate the weight of the force between point_index and the indices in the cell
+//		/*		float weight = 0;
+//				
+//				for (int i = 0; i < size; i++) {
+//					weight += point_weights[point_index] * point_weights[index[i]];
+//				}
+//*/
+//                // Compute and add t-SNE force between point and current node
+//                sq_distance = 1.0 / (1.0 + sq_distance);
+//				
+//				//hp_scalar_type force = cum_size * sq_distance;
+//				float weight = cum_weight * point_weights[point_index];
+//				hp_scalar_type force = weight * sq_distance;
+//
+//				//hp_scalar_type force = cum_size * weight * sq_distance;
+//
+//                sum_Q += force; // Sum Q will be used as normalisation term later (divide all negative forces by this sum_Q term)
+//
+//                force *= sq_distance;
+//                for(unsigned int d = 0; d < _emb_dimension; d++) neg_f[d] += force * distance[d];
             } else {
 
                 // Recursively apply Barnes-Hut to children
-                for(unsigned int i = 0; i < no_children; i++) children[i]->computeNonEdgeForcesOMP(point_index, theta, neg_f, sum_Q, weights);
+                for(unsigned int i = 0; i < no_children; i++) children[i]->computeNonEdgeForcesOMP(point_index, theta, neg_f, sum_Q);
             }
         }
 
@@ -431,7 +465,7 @@ namespace hdi{
             // Make sure that we spend no time on empty nodes or self-interactions
             if(cum_size == 0 || (is_leaf && size == 1 && index[0] == point_index)) return;
 
-            // Compute distance between point and center-of-mass
+            // Compute sq_distance between point and center-of-mass
             hp_scalar_type D = .0;
             unsigned int ind = point_index * _emb_dimension;
             for(unsigned int d = 0; d < _emb_dimension; d++) buff[d] = _emb_positions[ind + d] - _center_of_mass[d];
@@ -478,7 +512,7 @@ namespace hdi{
                 hp_scalar_type D;
                 ind1 = n * _emb_dimension;
                 for(unsigned int i = row_P[n]; i < row_P[n + 1]; i++) {
-                    // Compute pairwise distance and Q-value
+                    // Compute pairwise sq_distance and Q-value
                     D = 1.0;
                     ind2 = col_P[i] * _emb_dimension;
                     for(unsigned int d = 0; d < _emb_dimension; d++)
@@ -506,18 +540,18 @@ namespace hdi{
             int n = 0;
         #pragma omp parallel for
             for(n = 0; n < N; n++) {
-                std::vector<hp_scalar_type> buff(_emb_dimension,0);
+                std::vector<hp_scalar_type> distance(_emb_dimension,0);
                 unsigned int ind1, ind2;
                 hp_scalar_type q_ij_1;
                 ind1 = n * _emb_dimension;
                 for(auto idx: sparse_matrix._symmetric_matrix[n]) {
-                    // Compute pairwise distance and Q-value
+                    // Compute pairwise sq_distance and Q-value
                     q_ij_1 = 1.0;
                     ind2 = idx.first * _emb_dimension;
                     for(unsigned int d = 0; d < _emb_dimension; d++)
-                        buff[d] = _emb_positions[ind1 + d] - _emb_positions[ind2 + d]; //buff contains (yi-yj) per each _emb_dimension
+                        distance[d] = _emb_positions[ind1 + d] - _emb_positions[ind2 + d]; //distance contains (yi-yj) per each _emb_dimension
                     for(unsigned int d = 0; d < _emb_dimension; d++)
-                        q_ij_1 += buff[d] * buff[d];
+                        q_ij_1 += distance[d] * distance[d];
 
                     auto a = std::get<0>(idx.second);
                     auto b = std::get<1>(idx.second);
@@ -526,7 +560,7 @@ namespace hdi{
 
                     // Sum positive force
                     for(unsigned int d = 0; d < _emb_dimension; d++)
-                        pos_f[ind1 + d] += res * buff[d]; //(p_ij*q_j*mult) * (yi-yj)
+                        pos_f[ind1 + d] += res * distance[d]; //(p_ij*q_j*force) * (yi-yj)
                 }
             }
         }
@@ -538,18 +572,18 @@ namespace hdi{
             int n = 0;
         #pragma omp parallel for
             for(n = 0; n < N; n++) {
-                std::vector<hp_scalar_type> buff(_emb_dimension,0);
+                std::vector<hp_scalar_type> distance(_emb_dimension,0);
                 unsigned int ind1, ind2;
                 hp_scalar_type q_ij_1;
                 ind1 = n * _emb_dimension;
                 for(auto idx: sparse_matrix._symmetric_matrix[n]) {
-                    // Compute pairwise distance and Q-value
+                    // Compute pairwise sq_distance and Q-value
                     q_ij_1 = 1.0;
                     ind2 = idx.first * _emb_dimension;
                     for(unsigned int d = 0; d < _emb_dimension; d++)
-                        buff[d] = _emb_positions[ind1 + d] - _emb_positions[ind2 + d]; //buff contains (yi-yj) per each _emb_dimension
+                        distance[d] = _emb_positions[ind1 + d] - _emb_positions[ind2 + d]; //distance contains (yi-yj) per each _emb_dimension
                     for(unsigned int d = 0; d < _emb_dimension; d++)
-                        q_ij_1 += buff[d] * buff[d];
+                        q_ij_1 += distance[d] * distance[d];
 
                     auto a = std::get<0>(idx.second);
                     auto b = std::get<1>(idx.second);
@@ -558,7 +592,7 @@ namespace hdi{
 
                     // Sum positive force
                     for(unsigned int d = 0; d < _emb_dimension; d++)
-                        pos_f[ind1 + d] += res * buff[d]; //(p_ij*q_j*mult) * (yi-yj)
+                        pos_f[ind1 + d] += res * distance[d]; //(p_ij*q_j*force) * (yi-yj)
                 }
             }
         }
