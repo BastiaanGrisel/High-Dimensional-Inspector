@@ -204,7 +204,7 @@ namespace hdi{
             is_leaf = true;
             size = 0;
             cum_size = 0;
-			cum_weight = 0;
+			cum_weight = .0;
 
 			if (inp_parent != NULL) {
 				point_weights = inp_parent->point_weights;
@@ -256,19 +256,42 @@ namespace hdi{
         //#pragma critical
             {
                 // Ignore objects which do not belong in this quad tree
-                scalar_type* point = _emb_positions + new_index * _emb_dimension;
+				scalar_type* point = _emb_positions + new_index * _emb_dimension;
                 if(!boundary->containsPoint(point))
                     return false;
 
                 // Online update of cumulative size and center-of-mass
-                cum_size++;
-                hp_scalar_type mult1 = (hp_scalar_type) (cum_size - 1) / (hp_scalar_type) cum_size;
-                hp_scalar_type mult2 = 1.0 / (hp_scalar_type) cum_size;
-                for(unsigned int d = 0; d < _emb_dimension; d++) _center_of_mass[d] *= mult1;
-                for(unsigned int d = 0; d < _emb_dimension; d++) _center_of_mass[d] += mult2 * point[d];
+                
+				// Increment N_cell
+				cum_size++;
+
+		
+
+				// Update the center of mass
+				hp_scalar_type mult1 = (hp_scalar_type)(cum_size - 1) / (hp_scalar_type)cum_size;
+				hp_scalar_type mult2 = 1.0 / (hp_scalar_type)cum_size;
+
+				// y_cell = (y_cell * w_cell + w_i * y_i) / (w_cell + w_i)
+				for (unsigned int d = 0; d < _emb_dimension; d++) _center_of_mass[d] = (_center_of_mass[d] * cum_weight + point_weights[new_index] * point[d]) / (cum_weight + point_weights[new_index]);
+
+				/*for (unsigned int d = 0; d < _emb_dimension; d++) _center_of_mass[d] *= mult1 * cum_weight;
+				for (unsigned int d = 0; d < _emb_dimension; d++) _center_of_mass[d] += mult2 * point_weights[new_index] * point[d];*/
+
+				/*for (unsigned int d = 0; d < _emb_dimension; d++) _center_of_mass[d] *= mult1; 
+				for (unsigned int d = 0; d < _emb_dimension; d++) _center_of_mass[d] += mult2 * point[d];*/
+
+				// Update cumulative weight
+				//cum_weight = mult1 * cum_weight + mult2 * point_weights[new_index];
+				cum_weight += point_weights[new_index];
+	
+
+			/*	hp_scalar_type mult1 = (hp_scalar_type)(cum_size - 1) / (hp_scalar_type)cum_size;
+				hp_scalar_type mult2 = 1.0 / (hp_scalar_type)cum_size;
+				for (unsigned int d = 0; d < _emb_dimension; d++) _center_of_mass[d] *= mult1;
+				for (unsigned int d = 0; d < _emb_dimension; d++) _center_of_mass[d] += mult2 * point[d];*/
 
 				// Update the cumulative weight of this cell
-				cum_weight += point_weights[new_index];
+				//cum_weight += point_weights[new_index];
 
                 // If there is space in this quad tree and it is a leaf, add the object here
                 if(is_leaf && size < QT_NODE_CAPACITY) {
@@ -417,17 +440,24 @@ namespace hdi{
             }
 
             if(is_leaf || max_width / sqrt(sq_distance) < theta) {  // If we use this cell as a summary (recursion stop-condition)
+				// Estimate for Z inside this tree: N_cell / (1 + ||y_i - y_cell||^2)
+				// Total formula: (N_cell * (y_i - y_cell)) / (1 + ||y_i - y_cell||^2)^2
 
 				// Compute and add t-SNE force between point and current node
-				float q_i_cell_Z = 1.0 / (1.0 + sq_distance);
-				hp_scalar_type mult = cum_size * q_i_cell_Z;
+				float D = 1.0 / (1.0 + sq_distance);
+				hp_scalar_type mult = cum_size * D;
+
+				// sum_Q holds the estimate for Z (also based on Barnes-Hut)
 				sum_Q += mult;
 
-				mult *= q_i_cell_Z;
-				for (unsigned int d = 0; d < _emb_dimension; d++) neg_f[d] += mult * distance[d];
+				mult *= D;
 				
-				// Start code Bastiaan
+				// Calculate weight: W_i,cell = (sum_j w_j + N_cell * w_i) / (2 * N_cell)
+				float weight = (cum_weight + cum_size * point_weights[point_index]) / (2 * cum_size);
 
+				for (unsigned int d = 0; d < _emb_dimension; d++) 
+					neg_f[d] += weight * mult * distance[d];
+				
 
 //				// Calculate the weight of the force between point_index and the indices in the cell
 //		/*		float weight = 0;

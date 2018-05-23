@@ -123,7 +123,7 @@ namespace hdi{
             unsigned int cum_size;
 			
 			// Cumulative weight of points in this cell
-			scalar_type cum_weight;
+			hp_scalar_type cum_weight;
 			std::vector<scalar_type> point_weights; // Reference to weights of the data points
 
             // Axis-aligned bounding box stored as a center with half-_emb_dimensions to represent the boundaries of this quad tree
@@ -201,7 +201,7 @@ namespace hdi{
 				// Index of Yj
 				unsigned int ind2;
 
-                hp_scalar_type q_ij_1;
+                hp_scalar_type D;
 
 				// Index of the first coordinate of Yi
                 ind1 = j * _emb_dimension;
@@ -209,7 +209,7 @@ namespace hdi{
 				// Loop over all non-zero connections from data point j
                 for(auto elem: sparse_matrix[j]) { // j is the index of i, elem.first is the index of j, elem.second is the value p_ij
                     // Compute pairwise distance and Q-value
-                    q_ij_1 = 1.0; // q_ij = 1 + ||Yi - Yj||^2
+                    D = 1.0; // q_ij = 1 + ||Yi - Yj||^2
 					
                     ind2 = elem.first * _emb_dimension; // Index of the first coordinate of Yj
                     
@@ -218,19 +218,18 @@ namespace hdi{
                         buff[d] = _emb_positions[ind1 + d] - _emb_positions[ind2 + d]; // buff contains (yi-yj) for each _emb_dimension
                     
 					for(unsigned int d = 0; d < _emb_dimension; d++)
-                        q_ij_1 += buff[d] * buff[d];
+                        D += buff[d] * buff[d];
 
                     hp_scalar_type p_ij = elem.second;
-                    //hp_scalar_type res = hp_scalar_type(p_ij) * exaggeration / q_ij_1 / n; // Why n??
-					hp_scalar_type res = hp_scalar_type(p_ij) * exaggeration / q_ij_1 / n; // Why n??
+                    //hp_scalar_type res = hp_scalar_type(p_ij) * exaggeration / D / n; // Why n??
+					hp_scalar_type res = hp_scalar_type(p_ij) * exaggeration / D / n; // p_ij / (1 + ||y_i - y_j||^2) - Why diving by n?
 
-					// Fetch the weight value for this connection
-					//float weight = point_weights[j * n + elem.first];
-					//float weight = point_weights[j] * point_weights[elem.first];
+					// Fetch the weight value for this connection (average weight)
+					float weight = 0.5f * (point_weights[j] + point_weights[elem.first]);
 
                     // Add the positive force to the existing force for every dimension in the embedding
                     for(unsigned int d = 0; d < _emb_dimension; d++)
-                      pos_f[ind1 + d] += res * buff[d]; // (p_ij * (y_i - y_j)) / (1 + ||y_i - y_j||^2)
+                      pos_f[ind1 + d] += weight * res * buff[d]; // (p_ij * (y_i - y_j)) / (1 + ||y_i - y_j||^2)
                 }
             }
 #ifdef __APPLE__

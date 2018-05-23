@@ -12,8 +12,9 @@ void test_create_embedding() {
 
 	wt->prob_gen_param._perplexity = 40;
 
-	wt->tSNE.setTheta(0.5); // Barnes-hut
+	//wt->tSNE.setTheta(0.5); // Barnes-hut
 	//wt->tSNE.setTheta(0); // Exact
+	wt->tSNE.setTheta(0.0001); // Almost exact but BH
 
 	wt->tSNE_param._mom_switching_iter = 250;
 	wt->tSNE_param._remove_exaggeration_iter = 250;
@@ -22,18 +23,18 @@ void test_create_embedding() {
 	wt->initialise_tsne(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-1k.bin", N, input_dims);
 
 	// Set a weight for one selected point
-	//std::vector<int> selectedPoints{ 4,7,8,23,34,35,58,60,65,84,93,106,126,129,148,152,160,163,183,193,210,213,230,232,234,240,244,262,269,272,287,289,290,299,300,335,338,346,348,360,361,369,375,376,381,385,393,398,401,402,404,407,408,421,426,447,448,468,483,491,499,525,526,533,544,559,561,572,594,598,602,611,635,636,639,644,686,697,716,735,749,750,761,762,766,771,772,776,804,808,827,829,845,867,871,872,882,917,922,941,970,975,981,985,996 };
+	std::vector<int> selectedPoints{ 4,7,8,23,34,35,58,60,65,84,93,106,126,129,148,152,160,163,183,193,210,213,230,232,234,240,244,262,269,272,287,289,290,299,300,335,338,346,348,360,361,369,375,376,381,385,393,398,401,402,404,407,408,421,426,447,448,468,483,491,499,525,526,533,544,559,561,572,594,598,602,611,635,636,639,644,686,697,716,735,749,750,761,762,766,771,772,776,804,808,827,829,845,867,871,872,882,917,922,941,970,975,981,985,996 };
 	//std::vector<int> selectedPoints{ 4 };
-	std::vector<int> selectedPoints{ };
+	//std::vector<int> selectedPoints{ };
 
 	// POINT WEIGHTS
 	std::vector<float> pointWeights(N);
 	//pointWeights.resize(N);
 
-	int j = 243334434;
+	int j = 24333444434;
 
 	float selectedWeight = 1;
-	float unselectedWeight = 1;
+	float unselectedWeight = 0.01;
 
 	for (int i = 0; i < N; i++) {
 		pointWeights[i] = unselectedWeight;
@@ -61,7 +62,8 @@ void test_create_embedding() {
 	// Save as CSV
 	std::vector<scalar_type> res = wt->embedding.getContainer();
 
-	std::ofstream out_file2("C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding-" + std::to_string(selectedWeight) + "-" + std::to_string(unselectedWeight) + ".csv");
+	//std::ofstream out_file2("C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding-" + std::to_string(selectedWeight) + "-" + std::to_string(unselectedWeight) + ".csv");
+	std::ofstream out_file2("C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding.csv");
 
 	for (int i = 0; i < N; i++) {
 		std::string line = "";
