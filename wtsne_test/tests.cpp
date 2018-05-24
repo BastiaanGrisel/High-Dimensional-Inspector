@@ -9,6 +9,7 @@ void test_create_embedding() {
 	int N = 10000;
 	int input_dims = 784;
 	int output_dims = 2;
+	int iterations = 500;
 
 	wt->prob_gen_param._perplexity = 40;
 
@@ -48,16 +49,19 @@ void test_create_embedding() {
 
 	// Do iterations
 	float iteration_time = 0;
-	hdi::utils::ScopedTimer<float, hdi::utils::Seconds> timer(iteration_time);
 
-	for (int i = 0; i < 1000; i++) {
-		if (i % 100 == 0) {
-			hdi::utils::secureLogValue(&log, "Iteration", i);
-			//hdi::utils::secureLogValue(&log, "Time (sec)", iteration_time);
+	{
+		hdi::utils::ScopedTimer<float, hdi::utils::Milliseconds> timer(iteration_time);
+
+		for (int i = 0; i < iterations; i++) {
+			if(i > 0 && i % 100 == 0)
+				hdi::utils::secureLogValue(&log, "Iteration", i);
+
+			wt->do_iteration();
 		}
-
-		wt->do_iteration();
 	}
+
+	hdi::utils::secureLogValue(&log, "Average iteration time (ms): ", iteration_time / (float) iterations);
 
 	// Save as CSV
 	std::vector<scalar_type> res = wt->embedding.getContainer();
