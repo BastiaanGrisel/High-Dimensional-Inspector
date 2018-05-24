@@ -135,7 +135,7 @@ namespace hdi{
 
         //! Default constructor for SPTree -- build tree, too!
         template <typename scalar_type>
-        SPTree<scalar_type>::SPTree(unsigned int D, scalar_type* inp_data, unsigned int N, std::vector<scalar_type> weights){
+        SPTree<scalar_type>::SPTree(unsigned int D, scalar_type* inp_data, unsigned int N, scalar_type* weights){
             // Compute mean, width, and height of current map (boundaries of SPTree)
             hp_scalar_type* mean_Y = (hp_scalar_type*) malloc(D * sizeof(hp_scalar_type)); for(unsigned int d = 0; d < D; d++) mean_Y[d] = .0;
             hp_scalar_type*  min_Y = (hp_scalar_type*) malloc(D * sizeof(hp_scalar_type)); for(unsigned int d = 0; d < D; d++)  min_Y[d] =  DBL_MAX;

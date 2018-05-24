@@ -124,7 +124,7 @@ namespace hdi{
 			
 			// Cumulative weight of points in this cell
 			hp_scalar_type cum_weight;
-			std::vector<scalar_type> point_weights; // Reference to weights of the data points
+			scalar_type* point_weights; // Reference to weights of the data points
 
             // Axis-aligned bounding box stored as a center with half-_emb_dimensions to represent the boundaries of this quad tree
             Cell* boundary;
@@ -140,7 +140,7 @@ namespace hdi{
 
         public:
             //SPTree(unsigned int D, scalar_type* inp_data, unsigned int N);
-			SPTree(unsigned int D, scalar_type* inp_data, unsigned int N, std::vector<scalar_type> point_weights);
+			SPTree(unsigned int D, scalar_type* inp_data, unsigned int N, scalar_type* point_weights);
         private:
             SPTree(unsigned int D, scalar_type* inp_data, hp_scalar_type* inp_corner, hp_scalar_type* inp_width);
             SPTree(unsigned int D, scalar_type* inp_data, unsigned int N, hp_scalar_type* inp_corner, hp_scalar_type* inp_width);

@@ -361,7 +361,7 @@ namespace hdi{
             typedef double hp_scalar_type;
 
 			// Construct the spatial partitioning tree based on the data points in the embedding
-            SPTree<scalar_type> sptree(_params._embedding_dimensionality, _embedding->getContainer().data(), getNumberOfDataPoints(), _point_weights);
+            SPTree<scalar_type> sptree(_params._embedding_dimensionality, _embedding->getContainer().data(), getNumberOfDataPoints(), _point_weights.data());
 
             scalar_type sum_Q = .0;
 
