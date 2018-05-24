@@ -137,6 +137,8 @@ namespace hdi{
 				_gradient.resize(size*params._embedding_dimensionality,0);
 				_previous_gradient.resize(size*params._embedding_dimensionality,0);
 				_gain.resize(size*params._embedding_dimensionality,1);
+
+				_point_weights.resize(size, 1);
 			}
 			
 			utils::secureLogValue(_logger,"Number of data points",_P.size());
@@ -166,6 +168,7 @@ namespace hdi{
                 _gradient.resize(size*params._embedding_dimensionality,0);
                 _previous_gradient.resize(size*params._embedding_dimensionality,0);
                 _gain.resize(size*params._embedding_dimensionality,1);
+				_point_weights.resize(size, 1);
             }
 
             utils::secureLogValue(_logger,"Number of data points",_P.size());

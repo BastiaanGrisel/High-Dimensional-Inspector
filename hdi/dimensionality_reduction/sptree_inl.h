@@ -265,32 +265,20 @@ namespace hdi{
 				// Increment N_cell
 				cum_size++;
 
-		
-
 				// Update the center of mass
-				hp_scalar_type mult1 = (hp_scalar_type)(cum_size - 1) / (hp_scalar_type)cum_size;
-				hp_scalar_type mult2 = 1.0 / (hp_scalar_type)cum_size;
-
 				// y_cell = (y_cell * w_cell + w_i * y_i) / (w_cell + w_i)
 				for (unsigned int d = 0; d < _emb_dimension; d++) _center_of_mass[d] = (_center_of_mass[d] * cum_weight + point_weights[new_index] * point[d]) / (cum_weight + point_weights[new_index]);
 
-				/*for (unsigned int d = 0; d < _emb_dimension; d++) _center_of_mass[d] *= mult1 * cum_weight;
-				for (unsigned int d = 0; d < _emb_dimension; d++) _center_of_mass[d] += mult2 * point_weights[new_index] * point[d];*/
-
-				/*for (unsigned int d = 0; d < _emb_dimension; d++) _center_of_mass[d] *= mult1; 
-				for (unsigned int d = 0; d < _emb_dimension; d++) _center_of_mass[d] += mult2 * point[d];*/
-
 				// Update cumulative weight
-				//cum_weight = mult1 * cum_weight + mult2 * point_weights[new_index];
 				cum_weight += point_weights[new_index];
 	
-
 			/*	hp_scalar_type mult1 = (hp_scalar_type)(cum_size - 1) / (hp_scalar_type)cum_size;
 				hp_scalar_type mult2 = 1.0 / (hp_scalar_type)cum_size;
 				for (unsigned int d = 0; d < _emb_dimension; d++) _center_of_mass[d] *= mult1;
 				for (unsigned int d = 0; d < _emb_dimension; d++) _center_of_mass[d] += mult2 * point[d];*/
 
 				// Update the cumulative weight of this cell
+				//cum_weight = mult1 * cum_weight + mult2 * point_weights[new_index];
 				//cum_weight += point_weights[new_index];
 
                 // If there is space in this quad tree and it is a leaf, add the object here
@@ -457,28 +445,7 @@ namespace hdi{
 
 				for (unsigned int d = 0; d < _emb_dimension; d++) 
 					neg_f[d] += weight * mult * distance[d];
-				
 
-//				// Calculate the weight of the force between point_index and the indices in the cell
-//		/*		float weight = 0;
-//				
-//				for (int i = 0; i < size; i++) {
-//					weight += point_weights[point_index] * point_weights[index[i]];
-//				}
-//*/
-//                // Compute and add t-SNE force between point and current node
-//                sq_distance = 1.0 / (1.0 + sq_distance);
-//				
-//				//hp_scalar_type force = cum_size * sq_distance;
-//				float weight = cum_weight * point_weights[point_index];
-//				hp_scalar_type force = weight * sq_distance;
-//
-//				//hp_scalar_type force = cum_size * weight * sq_distance;
-//
-//                sum_Q += force; // Sum Q will be used as normalisation term later (divide all negative forces by this sum_Q term)
-//
-//                force *= sq_distance;
-//                for(unsigned int d = 0; d < _emb_dimension; d++) neg_f[d] += force * distance[d];
             } else {
 
                 // Recursively apply Barnes-Hut to children

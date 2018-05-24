@@ -260,7 +260,8 @@ int main(int argc, char *argv[])
         hdi::utils::secureLogValue(&log,"Similarities computation (sec)",similarities_comp_time);
         hdi::utils::secureLogValue(&log,"Gradient descent (sec)",gradient_desc_comp_time);
         hdi::utils::secureLogValue(&log,"Data saving (sec)",data_saving_time);
-		
+
+		system("pause");
 	}
     catch(std::logic_error& ex){ std::cout << "Logic error: " << ex.what() << std::endl;}
     catch(std::runtime_error& ex){ std::cout << "Runtime error: " << ex.what() << std::endl;}
