@@ -125,6 +125,7 @@ namespace hdi{
 			// Cumulative weight of points in this cell
 			hp_scalar_type cum_weight;
 			scalar_type* point_weights; // Reference to weights of the data points
+			bool first_weighted_datapoint = false;
 
             // Axis-aligned bounding box stored as a center with half-_emb_dimensions to represent the boundaries of this quad tree
             Cell* boundary;

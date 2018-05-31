@@ -135,7 +135,6 @@ int weighted_tsne::initialise_tsne(std::wstring data_path, int num_data_points, 
 
 		//typedef float scalar_type;
 		//Input
-		std::vector<scalar_type> data;
 		data.resize(num_data_points * num_dimensions);
 
 		{
@@ -155,7 +154,6 @@ int weighted_tsne::initialise_tsne(std::wstring data_path, int num_data_points, 
 		////////////////////////////////////////////////
 
 		hdi::utils::CoutLog log;
-		hdi::dr::HDJointProbabilityGenerator<scalar_type> prob_gen;
 		hdi::dr::HDJointProbabilityGenerator<scalar_type>::sparse_scalar_matrix_type distributions;
 		//hdi::dr::HDJointProbabilityGenerator<scalar_type>::Parameters prob_gen_param;
 		//hdi::dr::SparseTSNEUserDefProbabilities<scalar_type>::Parameters tSNE_param;
@@ -174,6 +172,7 @@ int weighted_tsne::initialise_tsne(std::wstring data_path, int num_data_points, 
 			//tSNE_param._mom_switching_iter = exaggeration_iter;
 			//tSNE_param._remove_exaggeration_iter = exaggeration_iter;
 			tSNE.initialize(distributions, &embedding, tSNE_param);
+			
 			//tSNE.setTheta(theta);
 
 			//hdi::utils::secureLog(&log,"Computing gradient descent...");

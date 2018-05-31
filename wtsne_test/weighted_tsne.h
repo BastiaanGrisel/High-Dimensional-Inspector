@@ -20,13 +20,19 @@
 #include <fstream>
 #include <stdio.h>
 #include <math.h>
-
-typedef float scalar_type;
+#include <set>
 
 class weighted_tsne {
 public:
+	typedef float scalar_type;
+	typedef std::vector<hdi::data::MapMemEff<uint32_t, float>> sparse_scalar_matrix;
+
+	std::vector<scalar_type> data;
+
 	hdi::dr::SparseTSNEUserDefProbabilities<scalar_type> tSNE;
 	hdi::dr::SparseTSNEUserDefProbabilities<scalar_type>::Parameters tSNE_param;
+
+	hdi::dr::HDJointProbabilityGenerator<scalar_type> prob_gen;
 	hdi::dr::HDJointProbabilityGenerator<scalar_type>::Parameters prob_gen_param;
 
 	hdi::data::Embedding<scalar_type> embedding;
