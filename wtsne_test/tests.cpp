@@ -80,37 +80,15 @@ void test_create_embedding() {
 	
 	save_as_csv(selectedPoints, selectedPoints.size(), 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/selection.csv");
 
-	std::set<int> selectedPointNeighbours;
-
-	// Use actual n_neighbours
-	
-	int n_neighbours = 50;
-	std::vector<weighted_tsne::scalar_type> distances_squared;
-	std::vector<int> neighbour_indices;
-
-	hdi::dr::HDJointProbabilityGenerator<weighted_tsne::scalar_type>::Parameters temp_prob_gen_param;
-	temp_prob_gen_param._perplexity = n_neighbours; // computeHighDimensionalDistances actually calculates (n_neighbours + 1) but includes itself
-	temp_prob_gen_param._perplexity_multiplier = 1;
-
-	wt->prob_gen.computeHighDimensionalDistances(wt->data.data(), input_dims, N, distances_squared, neighbour_indices, temp_prob_gen_param);
-
 	// Assemble data structure to hold weights
 	std::vector<weighted_tsne::scalar_type> connection_weights;
 	connection_weights.resize(N * N);
 
-	/*for (int i = 0; i < N; i++) {
-		for (int j = 0; j < N; j++) {
-			connection_weights[i * N + j] = 1;
-			connection_weights[j * N + i] = 1;
-		}
-	}*/
-
+	float selectedWeight = 1.0;
+	float unselectedWeight = 0.1;
+	float changethistoupdate = 232312233434524;
 	//float selectedWeight = 0.5 / (selectedPoints.size() * n_neighbours);
 	//float unselectedWeight = 0.5 / (N*(N-1) - selectedPoints.size() * n_neighbours);
-
-	float selectedWeight = 1.0;
-	float unselectedWeight = 0.5;
-	float changethistoupdate = 122432323343434324;
 
 	hdi::utils::secureLogValue(&log, "Selected weight", selectedWeight);
 	hdi::utils::secureLogValue(&log, "Unselected weight", unselectedWeight);
@@ -123,54 +101,44 @@ void test_create_embedding() {
 		}
 	}
 
-	//// Set weights from selected points to their nearest neighbours
-	//for (int selected_point : selectedPoints) {
-	//	for (int i = 0; i < n_neighbours; i++) {
-	//		int neighbour_idx = neighbour_indices[selected_point * (n_neighbours + 1) + i + 1];
-	//		connection_weights[selected_point * N + neighbour_idx] = selectedWeight; // i + 1 because it includes itself as the first NN
-	//		connection_weights[neighbour_idx * N + selected_point] = selectedWeight;
-	//	}
-	//}
+	// Add connections to neighbours using sq distance
+	int n_neighbours = 1000;
+	std::vector<weighted_tsne::scalar_type> distances_squared;
+	std::vector<int> neighbour_indices;
 
-	// Use P to select the neighbourhood
-	weighted_tsne::sparse_scalar_matrix P = wt->tSNE.getDistributionP();
-	//std::vector<hdi::data::MapMemEff<uint32_t, float>>
+	hdi::dr::HDJointProbabilityGenerator<weighted_tsne::scalar_type>::Parameters temp_prob_gen_param;
+	temp_prob_gen_param._perplexity = n_neighbours; // computeHighDimensionalDistances actually calculates (n_neighbours + 1) but includes itself
+	temp_prob_gen_param._perplexity_multiplier = 1;
 
-	float neighbours_thres = 0.0001;
+	wt->prob_gen.computeHighDimensionalDistances(wt->data.data(), input_dims, N, distances_squared, neighbour_indices, temp_prob_gen_param);
 
+	// Set weights from selected points to their nearest neighbours
 	for (int selected_point : selectedPoints) {
-		for (auto elem : P[selected_point]) {
-			if (elem.second > neighbours_thres) {
-				connection_weights[selected_point * N + elem.first] = selectedWeight; // i + 1 because it includes itself as the first NN
-				connection_weights[elem.first * N + selected_point] = selectedWeight;
-			}
+		for (int i = 0; i < n_neighbours; i++) {
+			int neighbour_idx = neighbour_indices[selected_point * (n_neighbours + 1) + i + 1];
+			connection_weights[selected_point * N + neighbour_idx] = selectedWeight; // i + 1 because it includes itself as the first NN
+			connection_weights[neighbour_idx * N + selected_point] = selectedWeight;
 		}
 	}
 
-	wt->tSNE.setWeights(connection_weights);
-	save_as_csv(connection_weights, N, N, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/weights.csv");
 
-
-	//for (int i : neighbour_indices) {
-	//	selectedPointNeighbours.insert(i);
-	//}
-
-	//float neighbours_thres = 0;
-
-	//// Get P and also include the nearest n_neighbours of the points in the selection
+	// Add connection to neighbours using P-value
 	//weighted_tsne::sparse_scalar_matrix P = wt->tSNE.getDistributionP();
 	////std::vector<hdi::data::MapMemEff<uint32_t, float>>
 
-	//for (int selectedIndex : selectedPoints) {
-	//	for (auto elem : P[selectedIndex]) {
+	//float neighbours_thres = 0.0001;
+
+	//for (int selected_point : selectedPoints) {
+	//	for (auto elem : P[selected_point]) {
 	//		if (elem.second > neighbours_thres) {
-	//			selectedPointNeighbours.insert(elem.first);
+	//			connection_weights[selected_point * N + elem.first] = selectedWeight; // i + 1 because it includes itself as the first NN
+	//			connection_weights[elem.first * N + selected_point] = selectedWeight;
 	//		}
 	//	}
 	//}
-/*
-	hdi::utils::secureLogValue(&log, "Selected points", selectedPoints.size());
-	hdi::utils::secureLogValue(&log, "Additional neighbours included", selectedPointNeighbours.size());*/
+
+	wt->tSNE.setWeights(connection_weights);
+	save_as_csv(connection_weights, N, N, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/weights.csv");
 
 	
 
