@@ -88,7 +88,7 @@ namespace hdi{
 			//! Reset the class and remove all the data points
 			void clear();
 			
-			void setWeights(std::vector<scalar_type> &w);
+			void setWeights(std::vector<scalar_type> &point_weights, std::vector<scalar_type> &gradient_weights);
 
 			//! Get the position in the embedding for a data point
 			void getEmbeddingPosition(scalar_vector_type& embedding_position, data_handle_type handle)const;
@@ -159,6 +159,7 @@ namespace hdi{
 			unsigned int _iteration;
 
 			std::vector<scalar_type> _point_weights;
+			std::vector<scalar_type> _point_gradient_boost;
 
 			utils::AbstractLog* _logger;
 	

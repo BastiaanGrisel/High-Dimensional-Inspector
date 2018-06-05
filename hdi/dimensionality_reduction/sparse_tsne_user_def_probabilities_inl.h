@@ -386,7 +386,7 @@ namespace hdi{
             }
 
             for(int i = 0; i < _gradient.size(); i++){
-                _gradient[i] = positive_forces[i] - (negative_forces[i] / sum_Q); // F_attr - ((F_rep * Z) / Z)
+                _gradient[i] = _point_gradient_boost[i/2] * (positive_forces[i] - (negative_forces[i] / sum_Q)); // F_attr - ((F_rep * Z) / Z)
             }
         }
 
@@ -424,8 +424,9 @@ namespace hdi{
 		}
 
 		template <typename scalar, typename sparse_scalar_matrix>
-		void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::setWeights(std::vector<scalar_type> &w) {
-			_point_weights = w;
+		void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::setWeights(std::vector<scalar_type> &point_weights, std::vector<scalar_type> &gradient_weights) {
+			_point_weights = point_weights;
+			_point_gradient_boost = gradient_weights;
 		}
 	}
 }
