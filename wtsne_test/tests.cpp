@@ -25,6 +25,7 @@ void save_as_csv(std::vector<float> data, int N, int output_dims, std::string fi
 void save_as_csv(std::vector<int> data, int N, int output_dims, std::string filename) {
 
 	std::ofstream out_file2(filename);
+	out_file2 << "";
 
 	for (int i = 0; i < N; i++) {
 		std::string line = "";
@@ -136,13 +137,16 @@ void test_create_embedding() {
 
 	// STEP 3: Set the weights
 
+	float selectedWeight = 1.0f;
+	float unselectedWeight = 0.001f;
+
 	// 2.1 Set weights using set values
-	std::vector<float> pointWeights(N, 0);
+	std::vector<float> pointWeights(N, unselectedWeight);
 	std::vector<float> gradientWeights(N, 1);
 
 	// Set selected weight
 	for (int selectedIndex : selectedPoints) {
-		pointWeights[selectedIndex] = 1.0f;
+		pointWeights[selectedIndex] = selectedWeight;
 	}
 
 
