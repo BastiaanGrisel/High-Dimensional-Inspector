@@ -386,7 +386,8 @@ namespace hdi{
             }
 
             for(int i = 0; i < _gradient.size(); i++){
-                _gradient[i] = _point_gradient_boost[i/2] * (positive_forces[i] - (negative_forces[i] / sum_Q)); // F_attr - ((F_rep * Z) / Z)
+				int point_index = i / 2;
+                _gradient[i] = _point_gradient_boost[point_index] * (positive_forces[i] - (negative_forces[i] / sum_Q)); // F_attr - ((F_rep * Z) / Z)
             }
         }
 

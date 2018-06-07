@@ -221,3 +221,45 @@ void weighted_tsne::do_iteration() {
 	//hdi::utils::CoutLog log;
 	//hdi::utils::secureLogValue(&log, "Iter", iter, verbose);
 }
+
+std::vector<int> intersection(std::vector<int> &v1, std::vector<int> &v2)
+{
+	std::vector<int> v3;
+
+	sort(v1.begin(), v1.end());
+	sort(v2.begin(), v2.end());
+
+	set_intersection(v1.begin(), v1.end(), v2.begin(), v2.end(), std::back_inserter(v3));
+
+	return v3;
+}
+
+
+float weighted_tsne::jaccard_similarity(std::vector<int> A, std::vector<int> B) {
+
+	float sizeA = A.size();
+	float sizeB = B.size();
+	float sizeIntersection = intersection(A, B).size();
+
+	return sizeIntersection / (sizeA + sizeB - sizeIntersection);
+}
+
+void weighted_tsne::calculate_set_error(std::vector<int> &NN1, std::vector<int> &NN2, std::vector<scalar_type> &errors, int N, int d) {
+
+	int k = d - 1;
+	errors.resize(N, 0);
+
+	// Calculate seq error for every data point
+	for (int i = 0; i < N; i++)
+	{
+		// Extract the neighbourhood list from the list of neighbours (and skip the first one)
+		int start_index = i * d + 1;
+		int end_index = start_index + k;
+
+		// Store the neighbourhoods in a new array for convenience
+		std::vector<int> NN1_i(NN1.begin() + start_index, NN1.begin() + end_index); // +1 to skip itself (which is closest neighbour)
+		std::vector<int> NN2_i(NN2.begin() + start_index, NN2.begin() + end_index);
+
+		errors[i] = 1 - jaccard_similarity(NN1_i, NN2_i);
+	}
+}

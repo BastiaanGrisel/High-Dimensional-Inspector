@@ -40,4 +40,7 @@ public:
 	int initialise_tsne(std::wstring data_path, int num_data_points, int num_dimensions);
 
 	void do_iteration();
+
+	void calculate_set_error(std::vector<int> &NN1, std::vector<int> &NN2, std::vector<scalar_type> &errors, int N, int d);
+	float jaccard_similarity(std::vector<int> A, std::vector<int> B);
 };
