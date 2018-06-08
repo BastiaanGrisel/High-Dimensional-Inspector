@@ -65,7 +65,7 @@ namespace hdi{
 			public:
 				Parameters();
             public:
-                scalar_type _perplexity;            //! Perplexity value in evert distribution.
+				scalar_vector_type _perplexity;            //! Perplexity value in evert distribution.
                 int         _perplexity_multiplier; //! Multiplied by the perplexity gives the number of nearest neighbors used
                 int         _num_trees;             //! Number of trees used int the AKNN
                 int         _num_checks;            //! Number of checks used int the AKNN

@@ -162,8 +162,10 @@ namespace hdi{
             flann::Matrix<scalar_type> dataset	(high_dimensional_data,num_dps,num_dim);
             flann::Matrix<scalar_type> query	(high_dimensional_data,num_dps,num_dim);
 
+			scalar_type max_perplexity = *std::max_element(params._perplexity.begin(), params._perplexity.end());
+
             flann::Index<flann::L2<scalar_type> > index(dataset, flann::KDTreeIndexParams(params._num_trees));
-            const unsigned int nn = params._perplexity*params._perplexity_multiplier + 1;
+            const unsigned int nn = max_perplexity *params._perplexity_multiplier + 1;
             distances_squared.resize(num_dps*nn);
             indices.resize(num_dps*nn);
             {
@@ -186,30 +188,32 @@ namespace hdi{
             utils::secureLog(_logger,"Computing joint-probability distribution...");
             const int n = distribution.size();
 
-            const unsigned int nn = params._perplexity*params._perplexity_multiplier + 1;
+			float max_perplexity = *std::max_element(params._perplexity.begin(), params._perplexity.end());
+			const unsigned int nn = max_perplexity * params._perplexity_multiplier + 1;
+
             __block scalar_vector_type temp_vector(distances_squared.size(),0);
             
-#ifdef __APPLE__
-            std::cout << "GCD dispatch, hd_joint_probability_generator 193.\n";
-            dispatch_apply(n, dispatch_get_global_queue(0, 0), ^(size_t j) {
-#else
-            #pragma omp parallel for
+//#ifdef __APPLE__
+//            std::cout << "GCD dispatch, hd_joint_probability_generator 193.\n";
+//            dispatch_apply(n, dispatch_get_global_queue(0, 0), ^(size_t j) {
+//#else
+//            #pragma omp parallel for
             for(int j = 0; j < n; ++j){
-#endif //__APPLE__
+//#endif //__APPLE__
                 const auto sigma =	utils::computeGaussianDistributionWithFixedPerplexity<scalar_vector_type>(
                                     distances_squared.begin() + j*nn, //check squared
                                     distances_squared.begin() + (j + 1)*nn,
                                     temp_vector.begin() + j*nn,
                                     temp_vector.begin() + (j + 1)*nn,
-                                    params._perplexity,
+                                    params._perplexity[j],
                                     200,
                                     1e-5,
                                     0
                                 );
             }
-#ifdef __APPLE__
-            );
-#endif
+//#ifdef __APPLE__
+//            );
+//#endif
 
             for(int j = 0; j < n; ++j){
                 for(int k = 1; k < nn; ++k){
@@ -224,7 +228,9 @@ namespace hdi{
             utils::ScopedTimer<scalar_type, utils::Seconds> timer(_statistics._distribution_time);
             utils::secureLog(_logger,"Computing joint-probability distribution...");
 
-            const unsigned int nn = params._perplexity*params._perplexity_multiplier + 1;
+			float max_perplexity = *std::max_element(params._perplexity.begin(), params._perplexity.end());
+
+            const unsigned int nn = max_perplexity*params._perplexity_multiplier + 1;
             const int n = indices.size()/nn;
             
 #ifdef __APPLE__
@@ -239,7 +245,7 @@ namespace hdi{
                                     distances_squared.begin() + (j + 1)*nn,
                                     probabilities.begin() + j*nn,
                                     probabilities.begin() + (j + 1)*nn,
-                                    params._perplexity,
+                                    params._perplexity[j],
                                     200,
                                     1e-5,
                                     0
@@ -285,7 +291,7 @@ namespace hdi{
                                     squared_distance_matrix.begin() + (j + 1)*nn,
                                     temp_vector.begin() + j*nn,
                                     temp_vector.begin() + (j + 1)*nn,
-                                    params._perplexity,
+                                    params._perplexity[j],
                                     200,
                                     1e-5,
                                     j

@@ -68,8 +68,6 @@ void test_create_embedding() {
 	int output_dims = 2;
 	int iterations = 1000;
 
-	wt->prob_gen_param._perplexity = 40;
-
 	wt->tSNE.setTheta(0.5); // Barnes-hut
 	//wt->tSNE.setTheta(0); // Exact
 	//wt->tSNE.setTheta(0.0001); // Almost exact but BH
@@ -77,9 +75,6 @@ void test_create_embedding() {
 	wt->tSNE_param._mom_switching_iter = 250;
 	wt->tSNE_param._remove_exaggeration_iter = 250;
 	wt->tSNE_param._embedding_dimensionality = output_dims;
-
-	wt->initialise_tsne(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-10k.bin", N, input_dims);
-
 
 	// STEP 1: Set selected points
 
@@ -103,6 +98,15 @@ void test_create_embedding() {
 	std::vector<int> selectedIds(selectedPoints.begin(), selectedPoints.end());
 	save_as_csv(selectedIds, selectedPoints.size(), 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/selection.csv");
 
+	// Set perplexities
+	std::vector<float> perplexities(N, 40);
+
+	//for (int selectedIndex : selectedPoints) {
+	//	perplexities[selectedIndex] = 1000;
+	//}
+
+	wt->prob_gen_param._perplexity = perplexities;
+	wt->initialise_tsne(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-10k.bin", N, input_dims);
 
 	// STEP 2: Augment selected points
 
@@ -146,18 +150,17 @@ void test_create_embedding() {
 	std::vector<int> selectedNeighbourIds(selectedPointWithNeighbours.begin(), selectedPointWithNeighbours.end());
 	save_as_csv(selectedNeighbourIds, selectedPointWithNeighbours.size(), 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/selection-neighbours.csv");
 
-
 	// STEP 3: Set the weights
 	float j = 252513;
 	float selectedWeight = 1.0f;
-	float unselectedWeight = 0.001f;
+	float unselectedWeight = 1.0f;
 
 	hdi::utils::secureLogValue(&log, "Selected weight", selectedWeight);
 	hdi::utils::secureLogValue(&log, "Unselected weight", unselectedWeight);
 
 	// 2.1 Set weights using set values
 	std::vector<float> pointWeights(N, 1);
-	std::vector<float> gradientWeights(N, 0);
+	std::vector<float> gradientWeights(N, 1);
 
 	// Set selected point weight
 	//for (int selectedIndex : selectedPoints) {
@@ -165,22 +168,22 @@ void test_create_embedding() {
 	//}
 
 	// Set selected gradient weight
-	for (int selectedIndex : selectedPointWithNeighbours) {
-		gradientWeights[selectedIndex] = selectedWeight;
-	}
+	//for (int selectedIndex : selectedPointWithNeighbours) {
+	//	gradientWeights[selectedIndex] = selectedWeight;
+	//}
 
 	// 2.2 Set weights based on P
 
-	for (int selectedIndex : selectedPointWithNeighbours) {
-		//float weight_sum = 0;
+	//for (int selectedIndex : selectedPointWithNeighbours) {
+	//	//float weight_sum = 0;
 
-		for (auto elem : P[selectedIndex]) { // elem.first is index, elem.second is p-value
-			//weight_sum += elem.second;
-			gradientWeights[elem.first] += elem.second;
-		}
+	//	for (auto elem : P[selectedIndex]) { // elem.first is index, elem.second is p-value
+	//		//weight_sum += elem.second;
+	//		gradientWeights[elem.first] += elem.second;
+	//	}
 
-		//gradientWeights[selectedIndex] += 1;
-	}
+	//	//gradientWeights[selectedIndex] += 1;
+	//}
 
 	//// Make gradient weights sum up to a constant
 	//float sum = 0;
@@ -266,7 +269,8 @@ void test_create_embedding() {
 
 		std::vector<weighted_tsne::scalar_type> distances_squared;
 		hdi::dr::HDJointProbabilityGenerator<weighted_tsne::scalar_type>::Parameters temp_prob_gen_param;
-		temp_prob_gen_param._perplexity = k;
+		std::vector<float> temp_perplexity(N, k);
+		temp_prob_gen_param._perplexity = temp_perplexity;
 		temp_prob_gen_param._perplexity_multiplier = 1;
 
 		// computeHighDimensionalDistances includes the point itself as its nearest neighbour
