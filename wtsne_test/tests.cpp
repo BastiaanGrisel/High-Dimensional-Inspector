@@ -157,7 +157,7 @@ void test_create_embedding() {
 
 	// 2.1 Set weights using set values
 	std::vector<float> pointWeights(N, 1);
-	std::vector<float> gradientWeights(N, unselectedWeight);
+	std::vector<float> gradientWeights(N, 0);
 
 	// Set selected point weight
 	//for (int selectedIndex : selectedPoints) {
@@ -169,27 +169,26 @@ void test_create_embedding() {
 		gradientWeights[selectedIndex] = selectedWeight;
 	}
 
-	// Make gradient weights sum up to a constant
-	float sum = 0;
-	for (int i = 0; i < gradientWeights.size(); i++) sum += gradientWeights[i];
-	for (int i = 0; i < gradientWeights.size(); i++) gradientWeights[i] = N * gradientWeights[i] / sum;
-
-
 	// 2.2 Set weights based on P
-	//std::vector<float> pointWeights(N, 1);
-	//std::vector<float> gradientWeights(N, 1);
 
-	//float weight = 100;
+	for (int selectedIndex : selectedPointWithNeighbours) {
+		//float weight_sum = 0;
 
-	//for (int selectedIndex : selectedPoints) {
-	//	pointWeights[selectedIndex] += weight; // Add the sum of the p_ij values
+		for (auto elem : P[selectedIndex]) { // elem.first is index, elem.second is p-value
+			//weight_sum += elem.second;
+			gradientWeights[elem.first] += elem.second;
+		}
 
-	//	for (auto elem : P[selectedIndex]) { // elem.first is index, elem.second is p-value
-	//		pointWeights[elem.first] += weight * elem.second;
-	//	}
-	//}
+		//gradientWeights[selectedIndex] += 1;
+	}
 
-	wt->tSNE.setWeights(pointWeights, gradientWeights);
+	//// Make gradient weights sum up to a constant
+	//float sum = 0;
+	//for (int i = 0; i < gradientWeights.size(); i++) sum += gradientWeights[i];
+	//for (int i = 0; i < gradientWeights.size(); i++) gradientWeights[i] = N * gradientWeights[i] / sum;
+
+	//wt->tSNE.setWeights(pointWeights, gradientWeights);
+	wt->tSNE.setWeights(gradientWeights, pointWeights);
 	save_as_csv(pointWeights, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/point-weights.csv");
 	save_as_csv(gradientWeights, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/gradient-weights.csv");
 
@@ -199,57 +198,57 @@ void test_create_embedding() {
 	{
 		hdi::utils::ScopedTimer<float, hdi::utils::Milliseconds> timer(iteration_time);
 
-		for (int i = 0; i < iterations/2; i++) {
+		for (int i = 0; i < iterations; i++) {
 			if (i > 0 && i % 100 == 0)
 				hdi::utils::secureLogValue(&log, "Iteration", i);
 
 			wt->do_iteration();
 		}
 
-		// Add low dimensional neighbourhood as high weight points
-		neighbours_thres = 0.4;
-		hdi::utils::secureLogValue(&log, "New neighbourhood thres", neighbours_thres);
+		//// Add low dimensional neighbourhood as high weight points
+		//neighbours_thres = 0.4;
+		//hdi::utils::secureLogValue(&log, "New neighbourhood thres", neighbours_thres);
 
-		wt->tSNE.computeLowDimensionalDistribution();
-		std::vector<float> Q = wt->tSNE.getDistributionQ(); //std::vector<hdi::data::MapMemEff<uint32_t, float>>
+		//wt->tSNE.computeLowDimensionalDistribution();
+		//std::vector<float> Q = wt->tSNE.getDistributionQ(); //std::vector<hdi::data::MapMemEff<uint32_t, float>>
 
-		for (int selectedIndex : selectedPoints) {
-			int idx = N * selectedIndex;
-			for (int j = 0; j < N; j++) {
-				float q_ij = Q[idx + j];
+		//for (int selectedIndex : selectedPoints) {
+		//	int idx = N * selectedIndex;
+		//	for (int j = 0; j < N; j++) {
+		//		float q_ij = Q[idx + j];
 
-				if (q_ij > neighbours_thres) {
-					selectedPointWithNeighbours.insert(j);
-				}
-			}
-		}
+		//		if (q_ij > neighbours_thres) {
+		//			selectedPointWithNeighbours.insert(j);
+		//		}
+		//	}
+		//}
 
-		hdi::utils::secureLogValue(&log, "Selected points with neighbours are now", selectedPointWithNeighbours.size());
+		//hdi::utils::secureLogValue(&log, "Selected points with neighbours are now", selectedPointWithNeighbours.size());
 
-		gradientWeights.resize(N, unselectedWeight);
+		//gradientWeights.resize(N, unselectedWeight);
 
-		// Set selected gradient weight
-		for (int selectedIndex : selectedPointWithNeighbours) {
-			gradientWeights[selectedIndex] = selectedWeight;
-		}
+		//// Set selected gradient weight
+		//for (int selectedIndex : selectedPointWithNeighbours) {
+		//	gradientWeights[selectedIndex] = selectedWeight;
+		//}
 
-		// Make gradient weights sum up to a constant
-		float sum = 0;
-		for (int i = 0; i < gradientWeights.size(); i++) sum += gradientWeights[i];
-		for (int i = 0; i < gradientWeights.size(); i++) gradientWeights[i] = N * gradientWeights[i] / sum;
+		//// Make gradient weights sum up to a constant
+		//float sum = 0;
+		//for (int i = 0; i < gradientWeights.size(); i++) sum += gradientWeights[i];
+		//for (int i = 0; i < gradientWeights.size(); i++) gradientWeights[i] = N * gradientWeights[i] / sum;
 
-		wt->tSNE.setWeights(pointWeights, gradientWeights);
+		//wt->tSNE.setWeights(pointWeights, gradientWeights);
 
-		save_as_csv(gradientWeights, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/gradient-weights-end.csv");
-		std::vector<int> selectedNeighbourIds(selectedPointWithNeighbours.begin(), selectedPointWithNeighbours.end());
-		save_as_csv(selectedNeighbourIds, selectedPointWithNeighbours.size(), 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/selection-neighbours-end.csv");
+		//save_as_csv(gradientWeights, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/gradient-weights-end.csv");
+		//std::vector<int> selectedNeighbourIds(selectedPointWithNeighbours.begin(), selectedPointWithNeighbours.end());
+		//save_as_csv(selectedNeighbourIds, selectedPointWithNeighbours.size(), 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/selection-neighbours-end.csv");
 
-		for (int i = 0; i < iterations / 2; i++) {
-			if (i > 0 && i % 100 == 0)
-				hdi::utils::secureLogValue(&log, "Iteration", i);
+		//for (int i = 0; i < iterations / 2; i++) {
+		//	if (i > 0 && i % 100 == 0)
+		//		hdi::utils::secureLogValue(&log, "Iteration", i);
 
-			wt->do_iteration();
-		}
+		//	wt->do_iteration();
+		//}
 	}
 
 	// Save embedding as CSV
