@@ -148,18 +148,31 @@ void test_create_embedding() {
 
 
 	// STEP 3: Set the weights
-	float j = 2313213;
+	float j = 2523343513;
 	float selectedWeight = 1.0f;
-	float unselectedWeight = 1.0f;
+	float unselectedWeight = 0.01f;
+
+	hdi::utils::secureLogValue(&log, "Selected weight", selectedWeight);
+	hdi::utils::secureLogValue(&log, "Unselected weight", unselectedWeight);
 
 	// 2.1 Set weights using set values
-	std::vector<float> pointWeights(N, unselectedWeight);
-	std::vector<float> gradientWeights(N, 1);
+	std::vector<float> pointWeights(N, 1);
+	std::vector<float> gradientWeights(N, unselectedWeight);
 
-	// Set selected weight
+	// Set selected point weight
+	//for (int selectedIndex : selectedPoints) {
+	//	pointWeights[selectedIndex] = selectedWeight;
+	//}
+
+	// Set selected gradient weight
 	for (int selectedIndex : selectedPoints) {
-		pointWeights[selectedIndex] = selectedWeight;
+		gradientWeights[selectedIndex] = selectedWeight;
 	}
+
+	// Make gradient weights sum up to a constant
+	float sum = 0;
+	for (int i = 0; i < gradientWeights.size(); i++) sum += gradientWeights[i];
+	for (int i = 0; i < gradientWeights.size(); i++) gradientWeights[i] = N * gradientWeights[i] / sum;
 
 
 	// 2.2 Set weights based on P
@@ -177,7 +190,8 @@ void test_create_embedding() {
 	//}
 
 	wt->tSNE.setWeights(pointWeights, gradientWeights);
-	save_as_csv(pointWeights, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/weights.csv");
+	save_as_csv(pointWeights, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/point-weights.csv");
+	save_as_csv(gradientWeights, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/gradient-weights.csv");
 
 	float iteration_time = 0;
 
