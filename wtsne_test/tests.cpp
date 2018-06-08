@@ -106,7 +106,7 @@ void test_create_embedding() {
 
 	// STEP 2: Augment selected points
 
-	std::set<int> selectedPointNeighbours;
+	std::set<int> selectedPointWithNeighbours(selectedPoints);
 
 	// 2.1 Using nearest neighbours
 	//int neighbours = 5;
@@ -120,7 +120,7 @@ void test_create_embedding() {
 	//wt->prob_gen.computeHighDimensionalDistances(wt->data.data(), input_dims, N, distances_squared, indices, temp_prob_gen_param);
 
 	//for (int i : indices) {
-	//	selectedPointNeighbours.insert(i);
+	//	selectedPointWithNeighbours.insert(i);
 	//}
 
 	// 2.2 Using the p-values
@@ -131,26 +131,26 @@ void test_create_embedding() {
 	for (int selectedIndex : selectedPoints) {
 		for (auto elem : P[selectedIndex]) {
 			if (elem.second > neighbours_thres) {
-				selectedPointNeighbours.insert(elem.first);
+				selectedPointWithNeighbours.insert(elem.first);
 			}
 		}
 	}
 
 
 	// 2.3 Merge neighbors with selected points
-	for (int selectedNeighbour : selectedPointNeighbours) {
-		selectedPoints.insert(selectedNeighbour);
-	}
+	//for (int selectedNeighbour : selectedPointWithNeighbours) {
+	//	selectedPoints.insert(selectedNeighbour);
+	//}
 
-	hdi::utils::secureLogValue(&log, "With extra neighbours included", selectedPoints.size());
-	std::vector<int> selectedNeighbourIds(selectedPointNeighbours.begin(), selectedPointNeighbours.end());
-	save_as_csv(selectedNeighbourIds, selectedPointNeighbours.size(), 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/selection-neighbours.csv");
+	hdi::utils::secureLogValue(&log, "With extra neighbours included", selectedPointWithNeighbours.size());
+	std::vector<int> selectedNeighbourIds(selectedPointWithNeighbours.begin(), selectedPointWithNeighbours.end());
+	save_as_csv(selectedNeighbourIds, selectedPointWithNeighbours.size(), 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/selection-neighbours.csv");
 
 
 	// STEP 3: Set the weights
-	float j = 2523343513;
+	float j = 252513;
 	float selectedWeight = 1.0f;
-	float unselectedWeight = 0.01f;
+	float unselectedWeight = 0.001f;
 
 	hdi::utils::secureLogValue(&log, "Selected weight", selectedWeight);
 	hdi::utils::secureLogValue(&log, "Unselected weight", unselectedWeight);
@@ -165,7 +165,7 @@ void test_create_embedding() {
 	//}
 
 	// Set selected gradient weight
-	for (int selectedIndex : selectedPoints) {
+	for (int selectedIndex : selectedPointWithNeighbours) {
 		gradientWeights[selectedIndex] = selectedWeight;
 	}
 
@@ -199,7 +199,52 @@ void test_create_embedding() {
 	{
 		hdi::utils::ScopedTimer<float, hdi::utils::Milliseconds> timer(iteration_time);
 
-		for (int i = 0; i < iterations; i++) {
+		for (int i = 0; i < iterations/2; i++) {
+			if (i > 0 && i % 100 == 0)
+				hdi::utils::secureLogValue(&log, "Iteration", i);
+
+			wt->do_iteration();
+		}
+
+		// Add low dimensional neighbourhood as high weight points
+		neighbours_thres = 0.4;
+		hdi::utils::secureLogValue(&log, "New neighbourhood thres", neighbours_thres);
+
+		wt->tSNE.computeLowDimensionalDistribution();
+		std::vector<float> Q = wt->tSNE.getDistributionQ(); //std::vector<hdi::data::MapMemEff<uint32_t, float>>
+
+		for (int selectedIndex : selectedPoints) {
+			int idx = N * selectedIndex;
+			for (int j = 0; j < N; j++) {
+				float q_ij = Q[idx + j];
+
+				if (q_ij > neighbours_thres) {
+					selectedPointWithNeighbours.insert(j);
+				}
+			}
+		}
+
+		hdi::utils::secureLogValue(&log, "Selected points with neighbours are now", selectedPointWithNeighbours.size());
+
+		gradientWeights.resize(N, unselectedWeight);
+
+		// Set selected gradient weight
+		for (int selectedIndex : selectedPointWithNeighbours) {
+			gradientWeights[selectedIndex] = selectedWeight;
+		}
+
+		// Make gradient weights sum up to a constant
+		float sum = 0;
+		for (int i = 0; i < gradientWeights.size(); i++) sum += gradientWeights[i];
+		for (int i = 0; i < gradientWeights.size(); i++) gradientWeights[i] = N * gradientWeights[i] / sum;
+
+		wt->tSNE.setWeights(pointWeights, gradientWeights);
+
+		save_as_csv(gradientWeights, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/gradient-weights-end.csv");
+		std::vector<int> selectedNeighbourIds(selectedPointWithNeighbours.begin(), selectedPointWithNeighbours.end());
+		save_as_csv(selectedNeighbourIds, selectedPointWithNeighbours.size(), 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/selection-neighbours-end.csv");
+
+		for (int i = 0; i < iterations / 2; i++) {
 			if (i > 0 && i % 100 == 0)
 				hdi::utils::secureLogValue(&log, "Iteration", i);
 
@@ -240,6 +285,9 @@ void test_create_embedding() {
 }
 
 int main() {
+
+	SetPriorityClass(GetCurrentProcess(), ABOVE_NORMAL_PRIORITY_CLASS);
+
 	//omp_set_num_threads(3);
 	test_create_embedding();
 	//test_jaccard_similarity();

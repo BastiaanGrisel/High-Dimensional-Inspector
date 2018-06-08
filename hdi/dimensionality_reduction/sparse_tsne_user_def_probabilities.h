@@ -118,6 +118,10 @@ namespace hdi{
             //! Barnes Hut approximation theta
             double theta(){return _theta;}
 
+			//! Compute Low-dimensional distribution
+			void computeLowDimensionalDistribution();
+			scalar_type _normalization_Q; //! Normalization factor of Q - Z in the original paper
+
 		private:
 			//! Compute High-dimensional distribution
             void computeHighDimensionalDistribution(const sparse_scalar_matrix_type& probabilities);
@@ -127,8 +131,7 @@ namespace hdi{
             void doAnIterationExact(double mult = 1);
             //! Do an iteration of the gradient descent
             void doAnIterationBarnesHut(double mult = 1);
-			//! Compute Low-dimensional distribution
-			void computeLowDimensionalDistribution();
+
             //! Compute tSNE gradient with the exact algorithm
             void computeExactGradient(double exaggeration);
             //! Compute tSNE gradient with the BarnesHut algorithm
@@ -147,7 +150,6 @@ namespace hdi{
 
             sparse_scalar_matrix_type _P; //! Conditional probalility distribution in the High-dimensional space
 			scalar_vector_type _Q; //! Conditional probalility distribution in the Low-dimensional space
-			scalar_type _normalization_Q; //! Normalization factor of Q - Z in the original paper
 
 			// Gradient descent
 			scalar_vector_type _gradient; //! Current gradient

@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <set>
+#include <windows.h>
 
 class weighted_tsne {
 public:
