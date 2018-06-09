@@ -66,7 +66,7 @@ void test_create_embedding() {
 	int N = 10000;
 	int input_dims = 784;
 	int output_dims = 2;
-	int iterations = 1000;
+	int iterations = 2000;
 
 	wt->tSNE.setTheta(0.5); // Barnes-hut
 	//wt->tSNE.setTheta(0); // Exact
@@ -155,8 +155,8 @@ void test_create_embedding() {
 	float selectedWeight = 1.0f;
 	float unselectedWeight = 1.0f;
 
-	float repForceWeight = 5.0f;
-	float attrForceWeight = 2.0f;
+	float repForceWeight = 1.0f;
+	float attrForceWeight = 1.0f;
 
 	//hdi::utils::secureLogValue(&log, "Selected weight", selectedWeight);
 	//hdi::utils::secureLogValue(&log, "Unselected weight", unselectedWeight);
@@ -168,35 +168,47 @@ void test_create_embedding() {
 	std::vector<float> attr_weights(N, 1);
 	std::vector<float> rep_weights(N, 1);
 
+	// Compute weight falloff in HD space
+	int k = 200;
+	hdi::utils::secureLogValue(&log, "k", k);
+
+	std::vector<float> weights_falloff_hd(N, 0);
+	wt->compute_weight_falloff(wt->data, N, input_dims, selectedPoints, k, weights_falloff_hd);
+
+	for (int i = 0; i < N; i++) {
+		rep_weights[i] = weights_falloff_hd[i] * repForceWeight;
+		attr_weights[i] = weights_falloff_hd[i] * attrForceWeight;
+	}
+
 	// Set selected point weight
-	for (int selectedIndex : selectedPoints) {
-		rep_weights[selectedIndex] = 10.0f;
-	}
+	//for (int selectedIndex : selectedPoints) {
+	//	rep_weights[selectedIndex] = 10.0f;
+	//}
 
-	for (int selectedIndex : selectedPointWithNeighbours) {
-		rep_weights[selectedIndex] = repForceWeight;
-	}
+	//for (int selectedIndex : selectedPointWithNeighbours) {
+	//	rep_weights[selectedIndex] = repForceWeight;
+	//}
 
-	for (int selectedIndex : selectedPointWithNeighbours) {
-		attr_weights[selectedIndex] = attrForceWeight;
-	}
+	//for (int selectedIndex : selectedPointWithNeighbours) {
+	//	attr_weights[selectedIndex] = attrForceWeight;
+	//}
 
-	// Compute weight falloff
-	int w = 23423232;
-	int k = 1500;
-	std::vector<int> nn;
-	wt->compute_neighbours(wt->data, N, input_dims, k, nn);
-	
-	std::vector<int> min_nn(N, INT_MAX);
 
-	// For each point, save the k-nn distance to the closest selected point. Save the distance to the closest selected point.
-	for (int selectedIndex : selectedPointWithNeighbours) {
-		for (int j = 0; j <= k; j++) {
-			int idx = selectedIndex * (k + 1); // Index of the first nearest neighbour of selectedIndex in nn (which is selectedIndex itself)
-			int nn_idx = nn[idx + j]; // Index of the j-th nearest neighbour of selectedIndex in min_nn
-			min_nn[nn_idx] = min(min_nn[nn_idx], j);
-		}
-	}
+	//int w = 23423232;
+	//int k = 1500;
+	//std::vector<int> nn;
+	//wt->compute_neighbours(wt->data, N, input_dims, k, nn);
+	//
+	//std::vector<int> min_nn(N, INT_MAX);
+
+	//// For each point, save the k-nn distance to the closest selected point. Save the distance to the closest selected point.
+	//for (int selectedIndex : selectedPointWithNeighbours) {
+	//	for (int j = 0; j <= k; j++) {
+	//		int idx = selectedIndex * (k + 1); // Index of the first nearest neighbour of selectedIndex in nn (which is selectedIndex itself)
+	//		int nn_idx = nn[idx + j]; // Index of the j-th nearest neighbour of selectedIndex in min_nn
+	//		min_nn[nn_idx] = min(min_nn[nn_idx], j);
+	//	}
+	//}
 
 	// Set the selected points to be zero
 	//for (int selectedIndex : selectedPointWithNeighbours) {
@@ -204,13 +216,13 @@ void test_create_embedding() {
 	//}
 
 	// Calculate weights from min_nn
-	std::vector<float> weights_falloff(N, 0);
+	//std::vector<float> weights_falloff_hd(N, 0);
 
-	for (int i = 0; i < N; i++) {
-		if (min_nn[i] != INT_MAX) {
-			weights_falloff[i] = (k - min_nn[i]) / (float) k;
-		}
-	}
+	//for (int i = 0; i < N; i++) {
+	//	if (min_nn[i] != INT_MAX) {
+	//		weights_falloff_hd[i] = (k - min_nn[i]) / (float) k;
+	//	}
+	//}
 
 	//int w = 12121232;
 	//weighted_tsne::sparse_scalar_matrix P = wt->tSNE.getDistributionP(); //std::vector<hdi::data::MapMemEff<uint32_t, float>>
@@ -253,7 +265,7 @@ void test_create_embedding() {
 	save_as_csv(pointWeights, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/point-weights.csv");
 	save_as_csv(attr_weights, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/attr-weights.csv");
 	save_as_csv(rep_weights, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/rep-weights.csv");
-	save_as_csv(weights_falloff, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/weights-falloff.csv");
+	save_as_csv(weights_falloff_hd, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/weights-falloff-hd.csv");
 
 	float iteration_time = 0;
 
@@ -267,6 +279,26 @@ void test_create_embedding() {
 
 			wt->do_iteration();
 		}
+
+		//std::vector<float> weights_falloff_ld(N, 0);
+		//wt->compute_weight_falloff(wt->embedding.getContainer(), N, output_dims, selectedPoints, 1500, weights_falloff_ld);
+		//save_as_csv(weights_falloff_ld, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/weights-falloff-ld.csv");
+
+		//for (int i = 0; i < N; i++) {
+		//	rep_weights[i] = max(weights_falloff_hd[i], weights_falloff_ld[i]) * repForceWeight;
+		//	attr_weights[i] = max(weights_falloff_hd[i], weights_falloff_ld[i]) * attrForceWeight;
+		//}
+
+		//wt->tSNE.setWeights(pointWeights, attr_weights, rep_weights);
+		//save_as_csv(attr_weights, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/attr-weights-end.csv");
+		//save_as_csv(rep_weights, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/rep-weights-end.csv");
+
+		//for (int i = 0; i < iterations/2; i++) {
+		//	if (i > 0 && i % 100 == 0)
+		//		hdi::utils::secureLogValue(&log, "Iteration", i);
+
+		//	wt->do_iteration();
+		//}
 
 		//// Add low dimensional neighbourhood as high weight points
 		//neighbours_thres = 0.4;

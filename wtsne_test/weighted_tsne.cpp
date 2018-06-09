@@ -276,3 +276,28 @@ void weighted_tsne::compute_neighbours(std::vector<float> data, int N, int d, in
 	// computeHighDimensionalDistances includes the point itself as its nearest neighbour
 	prob_gen.computeHighDimensionalDistances(data.data(), d, N, distances_squared, res, temp_prob_gen_param);
 }
+
+void weighted_tsne::compute_weight_falloff(std::vector<float> in_data, int N, int d, std::set<int> selected_indices, int k, std::vector<float> &weights_falloff) {
+	std::vector<int> nn;
+	compute_neighbours(in_data, N, d, k, nn);// TODO: inly calculate neighbours of selectedIndices, not of all points
+
+	std::vector<int> min_nn(N, INT_MAX);
+
+	// For each point, save the k-nn distance to the closest selected point. Save the distance to the closest selected point.
+	for (int selectedIndex : selected_indices) {
+		for (int j = 0; j <= k; j++) {
+			int idx = selectedIndex * (k + 1); // Index of the first nearest neighbour of selectedIndex in nn (which is selectedIndex itself)
+			int nn_idx = nn[idx + j]; // Index of the j-th nearest neighbour of selectedIndex in min_nn
+			min_nn[nn_idx] = min(min_nn[nn_idx], j);
+		}
+	}
+
+	// Calculate weights from min_nn
+	weights_falloff.resize(N, 0);
+
+	for (int i = 0; i < N; i++) {
+		if (min_nn[i] != INT_MAX) {
+			weights_falloff[i] = (k - min_nn[i]) / (float)k;
+		}
+	}
+}
