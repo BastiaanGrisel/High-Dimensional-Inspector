@@ -123,9 +123,9 @@ namespace hdi{
             unsigned int cum_size;
 			
 			// Cumulative weight of points in this cell
-			hp_scalar_type cum_weight;
-			scalar_type* point_weights; // Reference to weights of the data points
-			bool first_weighted_datapoint = false;
+			hp_scalar_type cum_rep_weight;
+			//scalar_type* attr_weights; // Reference to weights of the data points
+			scalar_type* rep_weights; // Reference to weights of the data points
 
             // Axis-aligned bounding box stored as a center with half-_emb_dimensions to represent the boundaries of this quad tree
             Cell* boundary;
@@ -163,7 +163,7 @@ namespace hdi{
             void computeEdgeForces(unsigned int* row_P, unsigned int* col_P, hp_scalar_type* val_P, hp_scalar_type sum_P, int N, hp_scalar_type* pos_f)const;
 
             template <typename sparse_scalar_matrix>
-            void computeEdgeForces(const sparse_scalar_matrix& matrix, hp_scalar_type multiplier, hp_scalar_type* pos_f)const;
+            void computeEdgeForces(const sparse_scalar_matrix& matrix, hp_scalar_type multiplier, hp_scalar_type* pos_f, scalar_type* attr_weights)const;
 
             void print();
 
@@ -181,7 +181,7 @@ namespace hdi{
         template <typename sparse_scalar_matrix>
 		// Positive Forces / Attractive Forces / F_attr
 		// sparse_scalar_matrix = std::vector<hdi::data::MapMemEff<uint32_t,float>>>, sparse_scalar_matrix is a list of lists containing int->float pairs
-        void SPTree<scalar_type>::computeEdgeForces(const sparse_scalar_matrix& sparse_matrix, hp_scalar_type exaggeration, hp_scalar_type* pos_f)const{
+        void SPTree<scalar_type>::computeEdgeForces(const sparse_scalar_matrix& sparse_matrix, hp_scalar_type exaggeration, hp_scalar_type* pos_f, scalar_type* attr_weights)const{
 			const int n = sparse_matrix.size(); // n is the total number of data points
 
             // Loop over all edges in the graph
@@ -226,7 +226,7 @@ namespace hdi{
 					hp_scalar_type res = hp_scalar_type(p_ij) * exaggeration / D / n; // p_ij / (1 + ||y_i - y_j||^2) - Why diving by n?
 
 					// Fetch the weight value for this connection (average weight)
-					float weight = 0.5f * (point_weights[j] + point_weights[elem.first]);
+					float weight = 0.5f * (attr_weights[j] + attr_weights[elem.first]);
 
                     // Add the positive force to the existing force for every dimension in the embedding
                     for(unsigned int d = 0; d < _emb_dimension; d++)

@@ -88,7 +88,7 @@ namespace hdi{
 			//! Reset the class and remove all the data points
 			void clear();
 			
-			void setWeights(std::vector<scalar_type> &point_weights, std::vector<scalar_type> &attr_weights, std::vector<scalar_type> &rep_weights);
+			void setWeights(std::vector<scalar_type> &attr_weights_avg, std::vector<scalar_type> &rep_weights_avg, std::vector<scalar_type> &attr_weights_all, std::vector<scalar_type> &rep_weights_all);
 
 			//! Get the position in the embedding for a data point
 			void getEmbeddingPosition(scalar_vector_type& embedding_position, data_handle_type handle)const;
@@ -160,9 +160,13 @@ namespace hdi{
 			Parameters _params;
 			unsigned int _iteration;
 
-			std::vector<scalar_type> _point_weights;
-			std::vector<scalar_type> _attr_weights;
-			std::vector<scalar_type> _rep_weights;
+			// Weights of the connection from A to B is computed as the average value of w_a and w_b
+			std::vector<scalar_type> _attr_weights_avg;
+			std::vector<scalar_type> _rep_weights_avg;
+
+			// Weight of connections from A to all B is w_a
+			std::vector<scalar_type> _attr_weights_all;
+			std::vector<scalar_type> _rep_weights_all;
 
 			utils::AbstractLog* _logger;
 	

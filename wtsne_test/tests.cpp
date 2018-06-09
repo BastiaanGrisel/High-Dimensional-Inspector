@@ -66,7 +66,7 @@ void test_create_embedding() {
 	int N = 10000;
 	int input_dims = 784;
 	int output_dims = 2;
-	int iterations = 2000;
+	int iterations = 1000;
 
 	wt->tSNE.setTheta(0.5); // Barnes-hut
 	//wt->tSNE.setTheta(0); // Exact
@@ -164,7 +164,7 @@ void test_create_embedding() {
 	hdi::utils::secureLogValue(&log, "Rep force weight", repForceWeight);
 
 	// 2.1 Set weights using set values
-	std::vector<float> pointWeights(N, 1);
+	std::vector<float> one_weights(N, 1);
 	std::vector<float> attr_weights(N, 1);
 	std::vector<float> rep_weights(N, 1);
 
@@ -261,8 +261,8 @@ void test_create_embedding() {
 	//for (int i = 0; i < attr_weights.size(); i++) attr_weights[i] = N * attr_weights[i] / sum;
 
 	//wt->tSNE.setWeights(pointWeights, attr_weights);
-	wt->tSNE.setWeights(pointWeights, attr_weights, rep_weights);
-	save_as_csv(pointWeights, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/point-weights.csv");
+	std::vector<float> high_weights(N, 5);
+	wt->tSNE.setWeights(one_weights, one_weights, one_weights, one_weights);
 	save_as_csv(attr_weights, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/attr-weights.csv");
 	save_as_csv(rep_weights, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/rep-weights.csv");
 	save_as_csv(weights_falloff_hd, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/weights-falloff-hd.csv");

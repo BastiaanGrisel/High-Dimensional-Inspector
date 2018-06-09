@@ -138,7 +138,10 @@ namespace hdi{
 				_previous_gradient.resize(size*params._embedding_dimensionality,0);
 				_gain.resize(size*params._embedding_dimensionality,1);
 
-				_point_weights.resize(size, 1);
+				_attr_weights_avg.resize(size, 1);
+				_attr_weights_all.resize(size, 1);
+				_rep_weights_avg.resize(size, 1);
+				_rep_weights_all.resize(size, 1);
 			}
 			
 			utils::secureLogValue(_logger,"Number of data points",_P.size());
@@ -168,9 +171,11 @@ namespace hdi{
                 _gradient.resize(size*params._embedding_dimensionality,0);
                 _previous_gradient.resize(size*params._embedding_dimensionality,0);
                 _gain.resize(size*params._embedding_dimensionality,1);
-				_point_weights.resize(size, 1);
-				_attr_weights.resize(size, 1);
-				_rep_weights.resize(size, 1);
+
+				_attr_weights_avg.resize(size, 1);
+				_attr_weights_all.resize(size, 1);
+				_rep_weights_avg.resize(size, 1);
+				_rep_weights_all.resize(size, 1);
             }
 
             utils::secureLogValue(_logger,"Number of data points",_P.size());
@@ -340,7 +345,7 @@ namespace hdi{
 					for(int d = 0; d < dim; ++d){
 						const int idx = i*n + j;
                         const double distance((*_embedding_container)[i * dim + d] - (*_embedding_container)[j * dim + d]);
-						const double negative(0.5 * (_point_weights[i] + _point_weights[j]) * _Q[idx] * _Q[idx] / _normalization_Q * distance);
+						const double negative(0.5 * (_rep_weights_avg[i] + _rep_weights_avg[j]) * _Q[idx] * _Q[idx] / _normalization_Q * distance);
 						_gradient[i * dim + d] += static_cast<scalar_type>(-4*negative);
 					}
 				}
@@ -351,7 +356,7 @@ namespace hdi{
                         const double distance((*_embedding_container)[i * dim + d] - (*_embedding_container)[j * dim + d]);
 						double p_ij = elem.second/n;
 						
-						const double positive(0.5 * (_point_weights[i] + _point_weights[j]) * p_ij * _Q[idx] * distance);
+						const double positive(0.5 * (_attr_weights_avg[i] + _attr_weights_avg[j]) * p_ij * _Q[idx] * distance);
 						_gradient[i * dim + d] += static_cast<scalar_type>(4*exaggeration*positive);
 					}
 				}
@@ -363,7 +368,7 @@ namespace hdi{
             typedef double hp_scalar_type;
 
 			// Construct the spatial partitioning tree based on the data points in the embedding
-            SPTree<scalar_type> sptree(_params._embedding_dimensionality, _embedding->getContainer().data(), getNumberOfDataPoints(), _point_weights.data());
+            SPTree<scalar_type> sptree(_params._embedding_dimensionality, _embedding->getContainer().data(), getNumberOfDataPoints(), _rep_weights_avg.data());
 
             scalar_type sum_Q = .0;
 
@@ -372,7 +377,7 @@ namespace hdi{
             std::vector<hp_scalar_type> negative_forces(getNumberOfDataPoints()*_params._embedding_dimensionality);
 
 			// Compute F_attr
-            sptree.computeEdgeForces(_P, exaggeration, positive_forces.data());
+            sptree.computeEdgeForces(_P, exaggeration, positive_forces.data(), _attr_weights_avg.data());
 
             std::vector<hp_scalar_type> sum_Q_subvalues(getNumberOfDataPoints(), 0);
 
@@ -389,7 +394,7 @@ namespace hdi{
 
             for(int i = 0; i < _gradient.size(); i++){
 				int point_index = i / 2;
-                _gradient[i] = (_attr_weights[point_index] * positive_forces[i] - _rep_weights[point_index] * (negative_forces[i] / sum_Q)); // F_attr - ((F_rep * Z) / Z)
+                _gradient[i] = (_attr_weights_all[point_index] * positive_forces[i] - _rep_weights_all[point_index] * (negative_forces[i] / sum_Q)); // F_attr - ((F_rep * Z) / Z)
             }
         }
 
@@ -427,10 +432,12 @@ namespace hdi{
 		}
 
 		template <typename scalar, typename sparse_scalar_matrix>
-		void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::setWeights(std::vector<scalar_type> &point_weights, std::vector<scalar_type> &attr_weights, std::vector<scalar_type> &rep_weights) {
-			_point_weights = point_weights;
-			_attr_weights = attr_weights;
-			_rep_weights = rep_weights;
+		void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::setWeights(std::vector<scalar_type> &attr_weights_avg, std::vector<scalar_type> &rep_weights_avg, std::vector<scalar_type> &attr_weights_all, std::vector<scalar_type> &rep_weights_all) {
+			_attr_weights_avg = attr_weights_avg;
+			_rep_weights_avg = rep_weights_avg;
+
+			_attr_weights_all = attr_weights_all;
+			_rep_weights_all = rep_weights_all;
 		}
 	}
 }

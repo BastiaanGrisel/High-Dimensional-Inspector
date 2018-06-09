@@ -150,7 +150,7 @@ namespace hdi{
             for(int d = 0; d < D; d++) mean_Y[d] /= (hp_scalar_type) N;
 
 			// Set weights
-			point_weights = weights;
+			rep_weights = weights;
 
             // Construct SPTree
             hp_scalar_type* width = (hp_scalar_type*) malloc(D * sizeof(hp_scalar_type));
@@ -204,10 +204,10 @@ namespace hdi{
             is_leaf = true;
             size = 0;
             cum_size = 0;
-			cum_weight = .0;
+			cum_rep_weight = .0;
 
 			if (inp_parent != NULL) {
-				point_weights = inp_parent->point_weights;
+				rep_weights = inp_parent->rep_weights;
 			}
 
             boundary = new Cell(_emb_dimension);
@@ -267,10 +267,10 @@ namespace hdi{
 
 				// Update the center of mass (weighted average)
 				// y_cell = (y_cell * w_cell + w_i * y_i) / (w_cell + w_i)
-				//for (unsigned int d = 0; d < _emb_dimension; d++) _center_of_mass[d] = (_center_of_mass[d] * cum_weight + point_weights[new_index] * point[d]) / (cum_weight + point_weights[new_index]);
+				//for (unsigned int d = 0; d < _emb_dimension; d++) _center_of_mass[d] = (_center_of_mass[d] * cum_rep_weight + point_weights[new_index] * point[d]) / (cum_rep_weight + point_weights[new_index]);
 
 				// Update cumulative weight
-				cum_weight += point_weights[new_index];
+				cum_rep_weight += rep_weights[new_index];
 	
 				// Update center of mass (non-weighted average)
 				hp_scalar_type mult1 = (hp_scalar_type)(cum_size - 1) / (hp_scalar_type)cum_size;
@@ -279,8 +279,8 @@ namespace hdi{
 				for (unsigned int d = 0; d < _emb_dimension; d++) _center_of_mass[d] += mult2 * point[d];
 
 				// Update the cumulative weight of this cell
-				//cum_weight = mult1 * cum_weight + mult2 * point_weights[new_index];
-				//cum_weight += point_weights[new_index];
+				//cum_rep_weight = mult1 * cum_rep_weight + mult2 * point_weights[new_index];
+				//cum_rep_weight += point_weights[new_index];
 
                 // If there is space in this quad tree and it is a leaf, add the object here
                 if(is_leaf && size < QT_NODE_CAPACITY) {
@@ -442,7 +442,7 @@ namespace hdi{
 				mult *= D;
 				
 				// Calculate weight: W_i,cell = (sum_j w_j + N_cell * w_i) / (2 * N_cell)
-				float weight = (cum_weight + cum_size * point_weights[point_index]) / (2 * cum_size);
+				float weight = (cum_rep_weight + cum_size * rep_weights[point_index]) / (2 * cum_size);
 
 				for (unsigned int d = 0; d < _emb_dimension; d++) 
 					neg_f[d] += weight * mult * distance[d];
