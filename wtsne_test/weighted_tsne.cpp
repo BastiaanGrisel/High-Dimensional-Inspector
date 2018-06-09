@@ -263,3 +263,16 @@ void weighted_tsne::calculate_set_error(std::vector<int> &NN1, std::vector<int> 
 		errors[i] = 1 - jaccard_similarity(NN1_i, NN2_i);
 	}
 }
+
+
+void weighted_tsne::compute_neighbours(std::vector<float> data, int N, int d, int k, std::vector<int> &res) {
+
+	std::vector<weighted_tsne::scalar_type> distances_squared;
+	hdi::dr::HDJointProbabilityGenerator<weighted_tsne::scalar_type>::Parameters temp_prob_gen_param;
+	std::vector<float> temp_perplexity(N, k);
+	temp_prob_gen_param._perplexity = temp_perplexity;
+	temp_prob_gen_param._perplexity_multiplier = 1;
+
+	// computeHighDimensionalDistances includes the point itself as its nearest neighbour
+	prob_gen.computeHighDimensionalDistances(data.data(), d, N, distances_squared, res, temp_prob_gen_param);
+}

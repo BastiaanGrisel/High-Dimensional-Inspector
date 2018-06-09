@@ -44,4 +44,5 @@ public:
 
 	void calculate_set_error(std::vector<int> &NN1, std::vector<int> &NN2, std::vector<scalar_type> &errors, int N, int d);
 	float jaccard_similarity(std::vector<int> A, std::vector<int> B);
+	void compute_neighbours(std::vector<float> data, int N, int d, int k, std::vector<int> &res);
 };

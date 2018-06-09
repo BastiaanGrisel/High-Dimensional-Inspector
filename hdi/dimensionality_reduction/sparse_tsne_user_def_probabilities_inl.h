@@ -169,6 +169,8 @@ namespace hdi{
                 _previous_gradient.resize(size*params._embedding_dimensionality,0);
                 _gain.resize(size*params._embedding_dimensionality,1);
 				_point_weights.resize(size, 1);
+				_attr_weights.resize(size, 1);
+				_rep_weights.resize(size, 1);
             }
 
             utils::secureLogValue(_logger,"Number of data points",_P.size());
@@ -387,7 +389,7 @@ namespace hdi{
 
             for(int i = 0; i < _gradient.size(); i++){
 				int point_index = i / 2;
-                _gradient[i] = _point_gradient_boost[point_index] * (positive_forces[i] - (negative_forces[i] / sum_Q)); // F_attr - ((F_rep * Z) / Z)
+                _gradient[i] = (_attr_weights[point_index] * positive_forces[i] - _rep_weights[point_index] * (negative_forces[i] / sum_Q)); // F_attr - ((F_rep * Z) / Z)
             }
         }
 
@@ -425,9 +427,10 @@ namespace hdi{
 		}
 
 		template <typename scalar, typename sparse_scalar_matrix>
-		void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::setWeights(std::vector<scalar_type> &point_weights, std::vector<scalar_type> &gradient_weights) {
+		void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::setWeights(std::vector<scalar_type> &point_weights, std::vector<scalar_type> &attr_weights, std::vector<scalar_type> &rep_weights) {
 			_point_weights = point_weights;
-			_point_gradient_boost = gradient_weights;
+			_attr_weights = attr_weights;
+			_rep_weights = rep_weights;
 		}
 	}
 }

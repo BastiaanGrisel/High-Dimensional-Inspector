@@ -102,7 +102,7 @@ void test_create_embedding() {
 	std::vector<float> perplexities(N, 40);
 
 	//for (int selectedIndex : selectedPoints) {
-	//	perplexities[selectedIndex] = 1000;
+	//	perplexities[selectedIndex] = 500;
 	//}
 
 	wt->prob_gen_param._perplexity = perplexities;
@@ -128,17 +128,17 @@ void test_create_embedding() {
 	//}
 
 	// 2.2 Using the p-values
-	float neighbours_thres = 0.002;
+	//float neighbours_thres = 0.002;
 
-	weighted_tsne::sparse_scalar_matrix P = wt->tSNE.getDistributionP(); //std::vector<hdi::data::MapMemEff<uint32_t, float>>
-	
-	for (int selectedIndex : selectedPoints) {
-		for (auto elem : P[selectedIndex]) {
-			if (elem.second > neighbours_thres) {
-				selectedPointWithNeighbours.insert(elem.first);
-			}
-		}
-	}
+	//weighted_tsne::sparse_scalar_matrix P = wt->tSNE.getDistributionP(); //std::vector<hdi::data::MapMemEff<uint32_t, float>>
+	//
+	//for (int selectedIndex : selectedPoints) {
+	//	for (auto elem : P[selectedIndex]) {
+	//		if (elem.second > neighbours_thres) {
+	//			selectedPointWithNeighbours.insert(elem.first);
+	//		}
+	//	}
+	//}
 
 
 	// 2.3 Merge neighbors with selected points
@@ -151,25 +151,83 @@ void test_create_embedding() {
 	save_as_csv(selectedNeighbourIds, selectedPointWithNeighbours.size(), 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/selection-neighbours.csv");
 
 	// STEP 3: Set the weights
-	float j = 252513;
+	float j = 25343233;
 	float selectedWeight = 1.0f;
 	float unselectedWeight = 1.0f;
 
-	hdi::utils::secureLogValue(&log, "Selected weight", selectedWeight);
-	hdi::utils::secureLogValue(&log, "Unselected weight", unselectedWeight);
+	float repForceWeight = 5.0f;
+	float attrForceWeight = 2.0f;
+
+	//hdi::utils::secureLogValue(&log, "Selected weight", selectedWeight);
+	//hdi::utils::secureLogValue(&log, "Unselected weight", unselectedWeight);
+	hdi::utils::secureLogValue(&log, "Attr force weight", attrForceWeight);
+	hdi::utils::secureLogValue(&log, "Rep force weight", repForceWeight);
 
 	// 2.1 Set weights using set values
 	std::vector<float> pointWeights(N, 1);
-	std::vector<float> gradientWeights(N, 1);
+	std::vector<float> attr_weights(N, 1);
+	std::vector<float> rep_weights(N, 1);
 
 	// Set selected point weight
+	for (int selectedIndex : selectedPoints) {
+		rep_weights[selectedIndex] = 10.0f;
+	}
+
+	for (int selectedIndex : selectedPointWithNeighbours) {
+		rep_weights[selectedIndex] = repForceWeight;
+	}
+
+	for (int selectedIndex : selectedPointWithNeighbours) {
+		attr_weights[selectedIndex] = attrForceWeight;
+	}
+
+	// Compute weight falloff
+	int w = 23423232;
+	int k = 1500;
+	std::vector<int> nn;
+	wt->compute_neighbours(wt->data, N, input_dims, k, nn);
+	
+	std::vector<int> min_nn(N, INT_MAX);
+
+	// For each point, save the k-nn distance to the closest selected point. Save the distance to the closest selected point.
+	for (int selectedIndex : selectedPointWithNeighbours) {
+		for (int j = 0; j <= k; j++) {
+			int idx = selectedIndex * (k + 1); // Index of the first nearest neighbour of selectedIndex in nn (which is selectedIndex itself)
+			int nn_idx = nn[idx + j]; // Index of the j-th nearest neighbour of selectedIndex in min_nn
+			min_nn[nn_idx] = min(min_nn[nn_idx], j);
+		}
+	}
+
+	// Set the selected points to be zero
+	//for (int selectedIndex : selectedPointWithNeighbours) {
+	//	min_nn[selectedIndex] = 0;
+	//}
+
+	// Calculate weights from min_nn
+	std::vector<float> weights_falloff(N, 0);
+
+	for (int i = 0; i < N; i++) {
+		if (min_nn[i] != INT_MAX) {
+			weights_falloff[i] = (k - min_nn[i]) / (float) k;
+		}
+	}
+
+	//int w = 12121232;
+	//weighted_tsne::sparse_scalar_matrix P = wt->tSNE.getDistributionP(); //std::vector<hdi::data::MapMemEff<uint32_t, float>>
+
 	//for (int selectedIndex : selectedPoints) {
-	//	pointWeights[selectedIndex] = selectedWeight;
+	//	attr_weights[selectedIndex] += 1;
+	//	rep_weights[selectedIndex] += 1;
+
+	//	for (auto elem : P[selectedIndex]) { // elem.first is index, elem.second is p-value
+	//		attr_weights[elem.first] += 1;
+	//		rep_weights[elem.first] += 10;
+	//	}
 	//}
 
 	// Set selected gradient weight
 	//for (int selectedIndex : selectedPointWithNeighbours) {
-	//	gradientWeights[selectedIndex] = selectedWeight;
+	//	attr_weights[selectedIndex] = selectedWeight;
 	//}
 
 	// 2.2 Set weights based on P
@@ -179,21 +237,23 @@ void test_create_embedding() {
 
 	//	for (auto elem : P[selectedIndex]) { // elem.first is index, elem.second is p-value
 	//		//weight_sum += elem.second;
-	//		gradientWeights[elem.first] += elem.second;
+	//		attr_weights[elem.first] += elem.second;
 	//	}
 
-	//	//gradientWeights[selectedIndex] += 1;
+	//	//attr_weights[selectedIndex] += 1;
 	//}
 
 	//// Make gradient weights sum up to a constant
 	//float sum = 0;
-	//for (int i = 0; i < gradientWeights.size(); i++) sum += gradientWeights[i];
-	//for (int i = 0; i < gradientWeights.size(); i++) gradientWeights[i] = N * gradientWeights[i] / sum;
+	//for (int i = 0; i < attr_weights.size(); i++) sum += attr_weights[i];
+	//for (int i = 0; i < attr_weights.size(); i++) attr_weights[i] = N * attr_weights[i] / sum;
 
-	//wt->tSNE.setWeights(pointWeights, gradientWeights);
-	wt->tSNE.setWeights(gradientWeights, pointWeights);
+	//wt->tSNE.setWeights(pointWeights, attr_weights);
+	wt->tSNE.setWeights(pointWeights, attr_weights, rep_weights);
 	save_as_csv(pointWeights, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/point-weights.csv");
-	save_as_csv(gradientWeights, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/gradient-weights.csv");
+	save_as_csv(attr_weights, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/attr-weights.csv");
+	save_as_csv(rep_weights, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/rep-weights.csv");
+	save_as_csv(weights_falloff, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/weights-falloff.csv");
 
 	float iteration_time = 0;
 
@@ -228,21 +288,21 @@ void test_create_embedding() {
 
 		//hdi::utils::secureLogValue(&log, "Selected points with neighbours are now", selectedPointWithNeighbours.size());
 
-		//gradientWeights.resize(N, unselectedWeight);
+		//attr_weights.resize(N, unselectedWeight);
 
 		//// Set selected gradient weight
 		//for (int selectedIndex : selectedPointWithNeighbours) {
-		//	gradientWeights[selectedIndex] = selectedWeight;
+		//	attr_weights[selectedIndex] = selectedWeight;
 		//}
 
 		//// Make gradient weights sum up to a constant
 		//float sum = 0;
-		//for (int i = 0; i < gradientWeights.size(); i++) sum += gradientWeights[i];
-		//for (int i = 0; i < gradientWeights.size(); i++) gradientWeights[i] = N * gradientWeights[i] / sum;
+		//for (int i = 0; i < attr_weights.size(); i++) sum += attr_weights[i];
+		//for (int i = 0; i < attr_weights.size(); i++) attr_weights[i] = N * attr_weights[i] / sum;
 
-		//wt->tSNE.setWeights(pointWeights, gradientWeights);
+		//wt->tSNE.setWeights(pointWeights, attr_weights);
 
-		//save_as_csv(gradientWeights, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/gradient-weights-end.csv");
+		//save_as_csv(attr_weights, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/gradient-weights-end.csv");
 		//std::vector<int> selectedNeighbourIds(selectedPointWithNeighbours.begin(), selectedPointWithNeighbours.end());
 		//save_as_csv(selectedNeighbourIds, selectedPointWithNeighbours.size(), 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/selection-neighbours-end.csv");
 
