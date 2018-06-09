@@ -72,7 +72,7 @@ namespace hdi{
 
         template <typename scalar, typename sparse_scalar_matrix>
         HDJointProbabilityGenerator<scalar, sparse_scalar_matrix>::Parameters::Parameters():
-            _perplexity(30),
+            _perplexities(30),
             _perplexity_multiplier(3),
             _num_trees(4),
             _num_checks(1024)
@@ -162,7 +162,7 @@ namespace hdi{
             flann::Matrix<scalar_type> dataset	(high_dimensional_data,num_dps,num_dim);
             flann::Matrix<scalar_type> query	(high_dimensional_data,num_dps,num_dim);
 
-			scalar_type max_perplexity = *std::max_element(params._perplexity.begin(), params._perplexity.end());
+			scalar_type max_perplexity = *std::max_element(params._perplexities.begin(), params._perplexities.end());
 
             flann::Index<flann::L2<scalar_type> > index(dataset, flann::KDTreeIndexParams(params._num_trees));
             const unsigned int nn = max_perplexity *params._perplexity_multiplier + 1;
@@ -188,7 +188,7 @@ namespace hdi{
             utils::secureLog(_logger,"Computing joint-probability distribution...");
             const int n = distribution.size();
 
-			float max_perplexity = *std::max_element(params._perplexity.begin(), params._perplexity.end());
+			float max_perplexity = *std::max_element(params._perplexities.begin(), params._perplexities.end());
 			const unsigned int nn = max_perplexity * params._perplexity_multiplier + 1;
 
             __block scalar_vector_type temp_vector(distances_squared.size(),0);
@@ -205,7 +205,7 @@ namespace hdi{
                                     distances_squared.begin() + (j + 1)*nn,
                                     temp_vector.begin() + j*nn,
                                     temp_vector.begin() + (j + 1)*nn,
-                                    params._perplexity[j],
+                                    params._perplexities[j],
                                     200,
                                     1e-5,
                                     0
@@ -228,7 +228,7 @@ namespace hdi{
             utils::ScopedTimer<scalar_type, utils::Seconds> timer(_statistics._distribution_time);
             utils::secureLog(_logger,"Computing joint-probability distribution...");
 
-			float max_perplexity = *std::max_element(params._perplexity.begin(), params._perplexity.end());
+			float max_perplexity = *std::max_element(params._perplexities.begin(), params._perplexities.end());
 
             const unsigned int nn = max_perplexity*params._perplexity_multiplier + 1;
             const int n = indices.size()/nn;
@@ -245,7 +245,7 @@ namespace hdi{
                                     distances_squared.begin() + (j + 1)*nn,
                                     probabilities.begin() + j*nn,
                                     probabilities.begin() + (j + 1)*nn,
-                                    params._perplexity[j],
+                                    params._perplexities[j],
                                     200,
                                     1e-5,
                                     0
@@ -291,7 +291,7 @@ namespace hdi{
                                     squared_distance_matrix.begin() + (j + 1)*nn,
                                     temp_vector.begin() + j*nn,
                                     temp_vector.begin() + (j + 1)*nn,
-                                    params._perplexity[j],
+                                    params._perplexities[j],
                                     200,
                                     1e-5,
                                     j

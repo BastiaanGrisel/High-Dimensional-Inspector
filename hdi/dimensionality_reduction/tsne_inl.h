@@ -52,7 +52,7 @@ namespace hdi{
 
 		template <typename scalar_type>
 		TSNE<scalar_type>::InitParams::InitParams():
-			_perplexity(30),
+			_perplexities(30),
 			_seed(0),
 			_embedding_dimensionality(2),
 			_minimum_gain(0.1),
@@ -143,7 +143,7 @@ namespace hdi{
 			//compute distances between data-points
 			computeHighDimensionalDistances();
 			//Compute gaussian distributions
-			computeGaussianDistributions(params._perplexity);
+			computeGaussianDistributions(params._perplexities);
 			//Compute High-dimensional distribution
 			computeHighDimensionalDistribution();
 

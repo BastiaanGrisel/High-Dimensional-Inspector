@@ -73,7 +73,7 @@ int main(int argc, char *argv[]){
 	}
 	 
 	hdi::dr::TSNE<scalar_type>::InitParams params;
-	params._perplexity = 250;
+	params._perplexities = 250;
 
     hdi::data::Embedding<scalar_type> embedding;
 

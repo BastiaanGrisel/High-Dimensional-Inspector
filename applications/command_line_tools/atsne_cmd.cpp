@@ -214,7 +214,7 @@ int main(int argc, char *argv[])
 
         {
             hdi::utils::ScopedTimer<float,hdi::utils::Seconds> timer(similarities_comp_time);
-            prob_gen_param._perplexity = perplexity;
+            prob_gen_param._perplexities = perplexity;
             prob_gen.computeProbabilityDistributions(data.data(),num_dimensions,num_data_points,distributions,prob_gen_param);
         }
 

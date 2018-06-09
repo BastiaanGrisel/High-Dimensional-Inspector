@@ -61,7 +61,7 @@ namespace hdi{
 			class InitParams{
 			public:
 				InitParams();
-				double _perplexity;
+				double _perplexities;
 				int _seed;
 				int _embedding_dimensionality;
 

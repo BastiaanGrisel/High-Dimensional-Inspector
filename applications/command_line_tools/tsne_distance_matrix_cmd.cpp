@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
         hdi::data::Embedding<scalar_type> embedding;
 
 
-        param._perplexity = perplexity;
+        param._perplexities = perplexity;
 
         prob_gen.computeProbabilityDistributionsFromDistanceMatrix(data,num_data_points,distributions,param);
         tSNE.initialize(distributions,&embedding);

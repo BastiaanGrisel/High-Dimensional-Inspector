@@ -161,7 +161,7 @@ int weighted_tsne::initialise_tsne(std::wstring data_path, int num_data_points, 
 
 		{
 			hdi::utils::ScopedTimer<float, hdi::utils::Seconds> timer(similarities_comp_time);
-			//prob_gen_param._perplexity = perplexity;
+			//prob_gen_param._perplexities = perplexity;
 			prob_gen.computeProbabilityDistributions(data.data(), num_dimensions, num_data_points, distributions, prob_gen_param);
 		}
 
@@ -264,13 +264,64 @@ void weighted_tsne::calculate_set_error(std::vector<int> &NN1, std::vector<int> 
 	}
 }
 
+// From: https://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#C++
+int weighted_tsne::levenshtein_distance(const std::vector<int> &s1, const std::vector<int> &s2)
+{
+	// To change the type this function manipulates and returns, change
+	// the return type and the types of the two variables below.
+	int s1len = s1.size();
+	int s2len = s2.size();
+
+	auto column_start = (decltype(s1len))1;
+
+	auto column = new decltype(s1len)[s1len + 1];
+	std::iota(column + column_start - 1, column + s1len + 1, column_start - 1);
+
+	for (auto x = column_start; x <= s2len; x++) {
+		column[0] = x;
+		auto last_diagonal = x - column_start;
+		for (auto y = column_start; y <= s1len; y++) {
+			auto old_diagonal = column[y];
+			auto possibilities = {
+				column[y] + 1,
+				column[y - 1] + 1,
+				last_diagonal + (s1[y - 1] == s2[x - 1] ? 0 : 1)
+			};
+			column[y] = std::min(possibilities);
+			last_diagonal = old_diagonal;
+		}
+	}
+	auto result = column[s1len];
+	delete[] column;
+	return result;
+}
+
+void weighted_tsne::calculate_levenshtein_error(std::vector<int> &NN1, std::vector<int> &NN2, std::vector<scalar_type> &errors, int N, int d) {
+
+	int k = d - 1;
+	errors.resize(N, 0);
+
+	// Calculate seq error for every data point
+	for (int i = 0; i < N; i++)
+	{
+		// Extract the neighbourhood list from the list of neighbours (and skip the first one)
+		int start_index = i * d + 1;
+		int end_index = start_index + k;
+
+		// Store the neighbourhoods in a new array for convenience
+		std::vector<int> NN1_i(NN1.begin() + start_index, NN1.begin() + end_index); // +1 to skip itself (which is closest neighbour)
+		std::vector<int> NN2_i(NN2.begin() + start_index, NN2.begin() + end_index);
+
+		errors[i] = levenshtein_distance(NN1_i, NN2_i);
+	}
+}
 
 void weighted_tsne::compute_neighbours(std::vector<float> data, int N, int d, int k, std::vector<int> &res) {
 
 	std::vector<weighted_tsne::scalar_type> distances_squared;
 	hdi::dr::HDJointProbabilityGenerator<weighted_tsne::scalar_type>::Parameters temp_prob_gen_param;
 	std::vector<float> temp_perplexity(N, k);
-	temp_prob_gen_param._perplexity = temp_perplexity;
+	temp_prob_gen_param._perplexities = temp_perplexity;
 	temp_prob_gen_param._perplexity_multiplier = 1;
 
 	// computeHighDimensionalDistances includes the point itself as its nearest neighbour
@@ -288,7 +339,7 @@ void weighted_tsne::compute_weight_falloff(std::vector<float> in_data, int N, in
 		for (int j = 0; j <= k; j++) {
 			int idx = selectedIndex * (k + 1); // Index of the first nearest neighbour of selectedIndex in nn (which is selectedIndex itself)
 			int nn_idx = nn[idx + j]; // Index of the j-th nearest neighbour of selectedIndex in min_nn
-			min_nn[nn_idx] = min(min_nn[nn_idx], j);
+			min_nn[nn_idx] = std::min(min_nn[nn_idx], j);
 		}
 	}
 

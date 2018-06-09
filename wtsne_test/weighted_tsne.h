@@ -21,7 +21,11 @@
 #include <stdio.h>
 #include <math.h>
 #include <set>
+
+#define NOMINMAX
 #include <windows.h>
+
+#define NOMINMAX
 
 class weighted_tsne {
 public:
@@ -42,8 +46,12 @@ public:
 
 	void do_iteration();
 
-	void calculate_set_error(std::vector<int> &NN1, std::vector<int> &NN2, std::vector<scalar_type> &errors, int N, int d);
 	float jaccard_similarity(std::vector<int> A, std::vector<int> B);
+	void calculate_set_error(std::vector<int> &NN1, std::vector<int> &NN2, std::vector<scalar_type> &errors, int N, int d);
+
+	int levenshtein_distance(const std::vector<int> &s1, const std::vector<int> &s2);
+	void calculate_levenshtein_error(std::vector<int> &NN1, std::vector<int> &NN2, std::vector<scalar_type> &errors, int N, int d);
+
 	void compute_neighbours(std::vector<float> data, int N, int d, int k, std::vector<int> &res);
 	void compute_weight_falloff(std::vector<float> in_data, int N, int d, std::set<int> selected_indices, int k, std::vector<float> &weights_falloff);
 };

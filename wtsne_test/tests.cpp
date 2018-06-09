@@ -57,6 +57,17 @@ void test_jaccard_similarity() {
 	delete wt;
 }
 
+void test_levenshtein_distance() {
+	std::vector<int> v1 = { 4,2,1 };
+	std::vector<int> v2 = { 1,2,4 };
+
+	weighted_tsne* wt = new weighted_tsne();
+
+	std::cout << std::to_string(wt->levenshtein_distance(v1, v2));
+
+	delete wt;
+}
+
 void test_create_embedding() {
 	hdi::utils::CoutLog log;
 
@@ -105,7 +116,7 @@ void test_create_embedding() {
 	//	perplexities[selectedIndex] = 500;
 	//}
 
-	wt->prob_gen_param._perplexity = perplexities;
+	wt->prob_gen_param._perplexities = perplexities;
 	wt->initialise_tsne(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-10k.bin", N, input_dims);
 
 	// STEP 2: Augment selected points
@@ -118,7 +129,7 @@ void test_create_embedding() {
 	//std::vector<int> indices;
 
 	//hdi::dr::HDJointProbabilityGenerator<weighted_tsne::scalar_type>::Parameters temp_prob_gen_param;
-	//temp_prob_gen_param._perplexity = neighbours - 1; // (it does +1 in HDJointProbabilityGenerator for some reason)
+	//temp_prob_gen_param._perplexities = neighbours - 1; // (it does +1 in HDJointProbabilityGenerator for some reason)
 	//temp_prob_gen_param._perplexity_multiplier = 1;
 
 	//wt->prob_gen.computeHighDimensionalDistances(wt->data.data(), input_dims, N, distances_squared, indices, temp_prob_gen_param);
@@ -151,12 +162,12 @@ void test_create_embedding() {
 	save_as_csv(selectedNeighbourIds, selectedPointWithNeighbours.size(), 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/selection-neighbours.csv");
 
 	// STEP 3: Set the weights
-	float j = 25343233;
+	float j = 2533345;
 	float selectedWeight = 1.0f;
 	float unselectedWeight = 1.0f;
 
-	float repForceWeight = 1.0f;
-	float attrForceWeight = 1.0f;
+	float repForceWeight = 4.0f;
+	float attrForceWeight = 2.0f;
 
 	//hdi::utils::secureLogValue(&log, "Selected weight", selectedWeight);
 	//hdi::utils::secureLogValue(&log, "Unselected weight", unselectedWeight);
@@ -169,15 +180,19 @@ void test_create_embedding() {
 	std::vector<float> rep_weights(N, 1);
 
 	// Compute weight falloff in HD space
-	int k = 200;
-	hdi::utils::secureLogValue(&log, "k", k);
+	int falloff_k = 20;
+	hdi::utils::secureLogValue(&log, "k", falloff_k);
 
 	std::vector<float> weights_falloff_hd(N, 0);
-	wt->compute_weight_falloff(wt->data, N, input_dims, selectedPoints, k, weights_falloff_hd);
+	wt->compute_weight_falloff(wt->data, N, input_dims, selectedPoints, falloff_k, weights_falloff_hd);
+
+	//for (int index : selectedPoints) {
+	//	rep_weights[index] = repForceWeight;
+	//}
 
 	for (int i = 0; i < N; i++) {
-		rep_weights[i] = weights_falloff_hd[i] * repForceWeight;
-		attr_weights[i] = weights_falloff_hd[i] * attrForceWeight;
+		rep_weights[i] = weights_falloff_hd[i] * repForceWeight + 1;
+		attr_weights[i] = weights_falloff_hd[i] * attrForceWeight + 1;
 	}
 
 	// Set selected point weight
@@ -261,8 +276,8 @@ void test_create_embedding() {
 	//for (int i = 0; i < attr_weights.size(); i++) attr_weights[i] = N * attr_weights[i] / sum;
 
 	//wt->tSNE.setWeights(pointWeights, attr_weights);
-	std::vector<float> high_weights(N, 5);
-	wt->tSNE.setWeights(one_weights, one_weights, one_weights, one_weights);
+	std::vector<float> high_weights(N, 3);
+	wt->tSNE.setWeights(one_weights, rep_weights, rep_weights, rep_weights); // attr avg, rep avg, attr all, rep all
 	save_as_csv(attr_weights, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/attr-weights.csv");
 	save_as_csv(rep_weights, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/rep-weights.csv");
 	save_as_csv(weights_falloff_hd, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/weights-falloff-hd.csv");
@@ -281,7 +296,7 @@ void test_create_embedding() {
 		}
 
 		//std::vector<float> weights_falloff_ld(N, 0);
-		//wt->compute_weight_falloff(wt->embedding.getContainer(), N, output_dims, selectedPoints, 1500, weights_falloff_ld);
+		//wt->compute_weight_falloff(wt->embedding.getContainer(), N, output_dims, selectedPoints, falloff_k, weights_falloff_ld);
 		//save_as_csv(weights_falloff_ld, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/weights-falloff-ld.csv");
 
 		//for (int i = 0; i < N; i++) {
@@ -353,28 +368,72 @@ void test_create_embedding() {
 	hdi::utils::secureLogValue(&log, "Total iteration time (s): ", iteration_time / 1000.0f);
 	hdi::utils::secureLogValue(&log, "Average iteration time (ms): ", iteration_time / (float)iterations);
 
-	// Calculate set error for each data point
 	{
-		int k = 50;
+		// Calculate set error for each data point
+		int k = 100;
 		std::vector<int> highDimNeighbours;
 		std::vector<int> lowDimNeighbours;
 
 		std::vector<weighted_tsne::scalar_type> distances_squared;
 		hdi::dr::HDJointProbabilityGenerator<weighted_tsne::scalar_type>::Parameters temp_prob_gen_param;
 		std::vector<float> temp_perplexity(N, k);
-		temp_prob_gen_param._perplexity = temp_perplexity;
+		temp_prob_gen_param._perplexities = temp_perplexity;
 		temp_prob_gen_param._perplexity_multiplier = 1;
 
 		// computeHighDimensionalDistances includes the point itself as its nearest neighbour
 		wt->prob_gen.computeHighDimensionalDistances(wt->data.data(), input_dims, N, distances_squared, highDimNeighbours, temp_prob_gen_param);
 		wt->prob_gen.computeHighDimensionalDistances(wt->embedding.getContainer().data(), output_dims, N, distances_squared, lowDimNeighbours, temp_prob_gen_param);
 
-		std::vector<float> errors;
-		wt->calculate_set_error(lowDimNeighbours, highDimNeighbours, errors, N, (k + 1)); // d is dimensionality of the neighbourhoods which is (k+1) since it includes the point itself
+		std::vector<float> set_errors;
+		wt->calculate_set_error(lowDimNeighbours, highDimNeighbours, set_errors, N, (k + 1)); // d is dimensionality of the neighbourhoods which is (k+1) since it includes the point itself
 
-		// Save errors as CSV
-		save_as_csv(errors, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/errors.csv");
+		// Save set_errors as CSV
+		save_as_csv(set_errors, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/errors-set.csv");
+
+		// Calculate Levenshtein error
+		//std::vector<float> lev_errors(N, 0);
+		//wt->calculate_levenshtein_error(lowDimNeighbours, highDimNeighbours, lev_errors, N, (k + 1)); // d is dimensionality of the neighbourhoods which is (k+1) since it includes the point itself
+		//save_as_csv(lev_errors, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/errors-lev.csv");
+
 	}
+
+	// //Calculate KL-divergence
+	//{
+	//	weighted_tsne::sparse_scalar_matrix P = wt->tSNE.getDistributionP(); //std::vector<hdi::data::MapMemEff<uint32_t, float>>
+
+	//	wt->tSNE.computeLowDimensionalDistribution();
+	//	std::vector<float> Q = wt->tSNE.getDistributionQ(); //std::vector<hdi::data::MapMemEff<uint32_t, float>>
+
+	//	std::vector<float> P_out(N*N, 0);
+
+	//	for (int i = 0; i < N; i++) {
+	//		for (auto elem : P[i]) {
+	//			P_out[i * N + elem.first] = elem.second;
+	//		}
+	//	}
+
+	//	save_as_csv(P_out, N, N, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/P.csv");
+	//	save_as_csv(Q, N, N, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/Q.csv");
+
+		//float kld_all = 0;
+		//float kld_selected = 0;
+
+		//for (int i = 0; i < N; i++) {
+		//	for (auto elem : P[i]) {
+		//		kld_all += elem.second * log2(elem.second / (Q[i * N + elem.first] * wt->tSNE._normalization_Q));
+		//	}
+		//}
+
+		//for (int index : selectedPoints) {
+		//	for (auto elem : P[index]) {
+		//		kld_selected += elem.second * log2(elem.second / Q[index * N + elem.first]);
+		//	}
+		//}
+		//hdi::utils::secureLogValue(&log, "KL divergernce (all): ", kld_all);
+		//hdi::utils::secureLogValue(&log, "KL divergernce (selected): ", kld_selected);
+
+		//save_as_csv(std::vector<float> { kld_all, kld_selected }, 2, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/errors-kl.csv");
+	//}
 
 	delete wt;
 }
@@ -386,5 +445,6 @@ int main() {
 	//omp_set_num_threads(3);
 	test_create_embedding();
 	//test_jaccard_similarity();
+
 	system("pause");
 }
