@@ -47,7 +47,11 @@ public:
 	void do_iteration();
 
 	float jaccard_similarity(std::vector<int> A, std::vector<int> B);
-	void calculate_set_error(std::vector<int> &NN1, std::vector<int> &NN2, std::vector<scalar_type> &errors, int N, int d);
+	void calculate_set_error(std::vector<int> &NN1, std::vector<int> &NN2, std::vector<scalar_type> &errors, int N, int d, int k);
+	void calculate_percentage_error(std::vector<int> &NN1, std::vector<int> &NN2, std::vector<scalar_type> &errors, int N, int d, int k);
+	void calculate_sequence_error(std::vector<int> &NN1, std::vector<int> &NN2, std::vector<float> &errors, int N, int d, int k);
+	float calculate_seq_error_max(int k, int N);
+	int indexOf(std::vector<int> in, int value);
 
 	int levenshtein_distance(const std::vector<int> &s1, const std::vector<int> &s2);
 	void calculate_levenshtein_error(std::vector<int> &NN1, std::vector<int> &NN2, std::vector<scalar_type> &errors, int N, int d);

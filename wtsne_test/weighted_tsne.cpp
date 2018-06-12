@@ -244,9 +244,27 @@ float weighted_tsne::jaccard_similarity(std::vector<int> A, std::vector<int> B) 
 	return sizeIntersection / (sizeA + sizeB - sizeIntersection);
 }
 
-void weighted_tsne::calculate_set_error(std::vector<int> &NN1, std::vector<int> &NN2, std::vector<scalar_type> &errors, int N, int d) {
+void weighted_tsne::calculate_percentage_error(std::vector<int> &NN1, std::vector<int> &NN2, std::vector<scalar_type> &errors, int N, int d, int k) {
+	assert(k <= d);
+	errors.resize(N, 0);
 
-	int k = d - 1;
+	// Calculate seq error for every data point
+	for (int i = 0; i < N; i++)
+	{
+		// Extract the neighbourhood list from the list of neighbours (and skip the first one)
+		int start_index = i * d + 1;
+		int end_index = start_index + k;
+
+		// Store the neighbourhoods in a new array for convenience
+		std::vector<int> NN1_i(NN1.begin() + start_index, NN1.begin() + end_index); // +1 to skip itself (which is closest neighbour)
+		std::vector<int> NN2_i(NN2.begin() + start_index, NN2.begin() + end_index);
+
+		errors[i] = (intersection(NN1_i, NN2_i).size() / (float) k);
+	}
+}
+
+void weighted_tsne::calculate_set_error(std::vector<int> &NN1, std::vector<int> &NN2, std::vector<scalar_type> &errors, int N, int d, int k) {
+	assert(k <= d);
 	errors.resize(N, 0);
 
 	// Calculate seq error for every data point
@@ -261,6 +279,53 @@ void weighted_tsne::calculate_set_error(std::vector<int> &NN1, std::vector<int> 
 		std::vector<int> NN2_i(NN2.begin() + start_index, NN2.begin() + end_index);
 
 		errors[i] = 1 - jaccard_similarity(NN1_i, NN2_i);
+	}
+}
+
+int weighted_tsne::indexOf(std::vector<int> in, int value) {
+	for (int i = 0; i < in.size(); i++) {
+		if (in[i] == value)
+			return i;
+	}
+	return -1;
+}
+
+float weighted_tsne::calculate_seq_error_max(int k, int N) {
+
+	float res = 0;
+
+	for (int i = 0; i < k; i++) {
+		res += (k - i) * std::abs(i - (N - i));
+	}
+
+	return res;
+}
+
+void weighted_tsne::calculate_sequence_error(std::vector<int> &NN1, std::vector<int> &NN2, std::vector<float> &errors, int N, int d, int k) {
+	assert(d == N + 1);
+	assert(k <= d);
+	errors.resize(N, 0);
+
+	// Calculate seq error for every data point
+	for (int i = 0; i < N; i++)
+	{
+		// Extract the neighbourhood list from the list of neighbours (and skip the first one)
+		int start_index = i * d + 1;
+		int end_index = start_index + k;
+
+		// Store the neighbourhoods in a new array for convenience
+		std::vector<int> NN1_i(NN1.begin() + start_index, NN1.begin() + end_index); // +1 to skip itself (which is closest neighbour)
+		std::vector<int> NN2_i(NN2.begin() + start_index, NN2.begin() + end_index);
+
+		errors[i] = 0;
+
+		for (int j = 0; j < k; j++) {
+			// Find the rank of point j in the other neighbourhood list
+			int rank_ji_1 = indexOf(NN1_i, NN2_i[j]);
+			int rank_ji_2 = indexOf(NN2_i, NN1_i[j]);
+
+			errors[i] += 0.5 * (k - j) * abs(j - rank_ji_1) + 0.5 * (k - j) * abs(j - rank_ji_2);
+		}
 	}
 }
 
@@ -340,12 +405,13 @@ void weighted_tsne::compute_weight_falloff(std::vector<float> in_data, int N, in
 			int idx = selectedIndex * (k + 1); // Index of the first nearest neighbour of selectedIndex in nn (which is selectedIndex itself)
 			int nn_idx = nn[idx + j]; // Index of the j-th nearest neighbour of selectedIndex in min_nn
 			min_nn[nn_idx] = std::min(min_nn[nn_idx], j);
+			//min_nn[nn_idx] += j;
 		}
 	}
 
-	// Calculate weights from min_nn
 	weights_falloff.resize(N, 0);
 
+	// Calculate weights from min_nn
 	for (int i = 0; i < N; i++) {
 		if (min_nn[i] != INT_MAX) {
 			weights_falloff[i] = (k - min_nn[i]) / (float)k;
