@@ -43,6 +43,7 @@ public:
 	hdi::data::Embedding<scalar_type> embedding;
 
 	int initialise_tsne(std::wstring data_path, int num_data_points, int num_dimensions);
+	int initialise_tsne(std::vector<scalar_type> data, int num_data_points, int num_dimensions);
 
 	void do_iteration();
 
