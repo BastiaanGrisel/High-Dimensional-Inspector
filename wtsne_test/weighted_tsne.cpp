@@ -140,6 +140,15 @@ int weighted_tsne::indexOf(std::vector<int> in, int value) {
 	return -1;
 }
 
+void weighted_tsne::set_locked_points(std::vector<int> indices)
+{
+	tSNE.setLockedPoints(indices);
+}
+
+void weighted_tsne::set_coordinates(std::vector<int> indices, std::vector<scalar_type> coordinates)
+{
+}
+
 float weighted_tsne::calculate_seq_error_max(int k, int N) {
 
 	float res = 0;

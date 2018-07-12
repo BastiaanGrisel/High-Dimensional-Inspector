@@ -90,6 +90,8 @@ namespace hdi{
 			
 			void setWeights(std::vector<scalar_type> &attr_weights_avg, std::vector<scalar_type> &rep_weights_avg, std::vector<scalar_type> &attr_weights_all, std::vector<scalar_type> &rep_weights_all);
 
+			void setLockedPoints(std::vector<int> indices);
+
 			//! Get the position in the embedding for a data point
 			void getEmbeddingPosition(scalar_vector_type& embedding_position, data_handle_type handle)const;
 
@@ -167,6 +169,9 @@ namespace hdi{
 			// Weight of connections from A to all B is w_a
 			std::vector<scalar_type> _attr_weights_all;
 			std::vector<scalar_type> _rep_weights_all;
+
+			// For each data point, specifies whether it is locked or not
+			std::vector<bool> _locked_points;
 
 			utils::AbstractLog* _logger;
 	

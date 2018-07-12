@@ -54,6 +54,9 @@ public:
 	float calculate_seq_error_max(int k, int N);
 	int indexOf(std::vector<int> in, int value);
 
+	void set_locked_points(std::vector<int> indices);
+	void set_coordinates(std::vector<int> indices, std::vector<scalar_type> coordinates);
+
 	int levenshtein_distance(const std::vector<int> &s1, const std::vector<int> &s2);
 	void calculate_levenshtein_error(std::vector<int> &NN1, std::vector<int> &NN2, std::vector<scalar_type> &errors, int N, int d);
 

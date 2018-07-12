@@ -1,4 +1,5 @@
 #include "weighted_tsne.h"
+#include "tests.h"
 
 void save_as_csv(std::vector<float> data, int N, int output_dims, std::string filename) {
 
@@ -663,6 +664,7 @@ void test_create_two_stage() {
 
 	// Set tSNE parameters
 	int N = 1024;
+	int N_all = 10000;
 	int input_dims = 784;
 	int output_dims = 2;
 	int iterations = 1000;
@@ -682,7 +684,7 @@ void test_create_two_stage() {
 	wt->prob_gen_param._perplexities = perplexities;
 
 	std::vector<weighted_tsne::scalar_type> all_data;
-	read_bin(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-10k.bin", 10000, input_dims, all_data);
+	read_bin(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-10k.bin", N_all, input_dims, all_data);
 
 	std::vector<weighted_tsne::scalar_type> selected_data(N * input_dims);
 	
@@ -696,12 +698,10 @@ void test_create_two_stage() {
 
 	save_as_csv(selected_data, N, input_dims, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/selection.csv");
 
-	// Initialise tsne
-	//wt->initialise_tsne(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-10k.bin", N, input_dims);
 	wt->initialise_tsne(selected_data, N, input_dims);
 
-	std::vector<float> one_weights(N, 1);
-	wt->tSNE.setWeights(one_weights, one_weights, one_weights, one_weights); // attr avg, rep avg, attr all, rep all
+	//std::vector<float> one_weights(N, 1);
+	//wt->tSNE.setWeights(one_weights, one_weights, one_weights, one_weights); // attr avg, rep avg, attr all, rep all
 
 	float iteration_time = 0;
 
@@ -718,10 +718,19 @@ void test_create_two_stage() {
 	}
 
 	std::vector<weighted_tsne::scalar_type> res = wt->embedding.getContainer();
-	save_as_csv(res, N, output_dims, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding.csv");
+	save_as_csv(res, N, output_dims, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding-selection.csv");
 
 	hdi::utils::secureLogValue(&log, "Total iteration time (s): ", iteration_time / 1000.0f);
 	hdi::utils::secureLogValue(&log, "Average iteration time (ms): ", iteration_time / (float)iterations);
+
+
+	// Rerun tsne on entire dataset, but lock the previous points to the location of the previous embedding
+	wt->initialise_tsne(all_data, N_all, input_dims);
+
+	wt->set_locked_points(selectedIndices);
+	wt->set_coordinates(selectedIndices, res);
+
+
 }
 
 int main() {

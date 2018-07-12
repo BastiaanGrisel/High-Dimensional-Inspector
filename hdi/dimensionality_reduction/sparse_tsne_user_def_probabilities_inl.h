@@ -142,6 +142,8 @@ namespace hdi{
 				_attr_weights_all.resize(size, 1);
 				_rep_weights_avg.resize(size, 1);
 				_rep_weights_all.resize(size, 1);
+
+				_locked_points.resize(size, false);
 			}
 			
 			utils::secureLogValue(_logger,"Number of data points",_P.size());
@@ -176,6 +178,8 @@ namespace hdi{
 				_attr_weights_all.resize(size, 1);
 				_rep_weights_avg.resize(size, 1);
 				_rep_weights_all.resize(size, 1);
+
+				_locked_points.resize(size, false);
             }
 
             utils::secureLogValue(_logger,"Number of data points",_P.size());
@@ -438,6 +442,15 @@ namespace hdi{
 
 			_attr_weights_all = attr_weights_all;
 			_rep_weights_all = rep_weights_all;
+		}
+
+		template <typename scalar, typename sparse_scalar_matrix>
+		void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::setLockedPoints(std::vector<int> indices) {
+			_locked_points.resize(getNumberOfDataPoints(), false);
+
+			for (int index : indices) {
+				_locked_points[index] = true;
+			}
 		}
 	}
 }
