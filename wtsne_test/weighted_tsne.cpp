@@ -4,8 +4,9 @@ int weighted_tsne::initialise_tsne(std::vector<scalar_type> in_data, int num_dat
 {
 	try {
 		//Input
-		data.resize(num_data_points * num_dimensions);
-		std::copy(data.begin(), data.begin() + (num_data_points * num_dimensions), in_data.begin());
+		data = in_data;
+		//data.resize(num_data_points * num_dimensions);
+		//std::copy(data.begin(), data.begin() + (num_data_points * num_dimensions), in_data.begin());
 
 		float similarities_comp_time = 0;
 
