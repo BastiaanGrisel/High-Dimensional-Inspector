@@ -396,10 +396,16 @@ namespace hdi{
                 sum_Q += sum_Q_subvalues[n];
             }
 
-            for(int i = 0; i < _gradient.size(); i++){
+			for (int i = 0; i < _gradient.size(); i++) {
 				int point_index = i / 2;
-                _gradient[i] = (_attr_weights_all[point_index] * positive_forces[i] - _rep_weights_all[point_index] * (negative_forces[i] / sum_Q)); // F_attr - ((F_rep * Z) / Z)
-            }
+
+				//if (_locked_points[point_index] == false) {
+					_gradient[i] = (_attr_weights_all[point_index] * positive_forces[i] - _rep_weights_all[point_index] * (negative_forces[i] / sum_Q)); // F_attr - ((F_rep * Z) / Z)
+	/*			}
+				else {
+					_gradient[i] = 0;
+				}*/
+			}
         }
 
 		//temp
@@ -409,6 +415,9 @@ namespace hdi{
         template <typename scalar, typename sparse_scalar_matrix>
         void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::updateTheEmbedding(double mult){
 			for(int i = 0; i < _gradient.size(); ++i){
+				int point_index = i / 2;
+				if (_locked_points[point_index]) continue;
+
 				_gain[i] = static_cast<scalar_type>((sign(_gradient[i]) != sign(_previous_gradient[i])) ? (_gain[i] + .2) : (_gain[i] * .8));
 				if(_gain[i] < _params._minimum_gain){
 					_gain[i] = static_cast<scalar_type>(_params._minimum_gain);

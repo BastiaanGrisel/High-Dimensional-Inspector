@@ -1,5 +1,4 @@
 #include "weighted_tsne.h"
-#include "tests.h"
 
 void save_as_csv(std::vector<float> data, int N, int output_dims, std::string filename) {
 
@@ -657,10 +656,20 @@ void test_create_embedding() {
 	delete wt;
 }
 
+weighted_tsne* get_tsne_instance(int output_dims) {
+	weighted_tsne* wt = new weighted_tsne();
+
+	wt->tSNE.setTheta(0.5); // Barnes-hut
+
+	wt->tSNE_param._mom_switching_iter = 250;
+	wt->tSNE_param._remove_exaggeration_iter = 250;
+	wt->tSNE_param._embedding_dimensionality = output_dims;
+
+	return wt;
+}
+
 void test_create_two_stage() {
 	hdi::utils::CoutLog log;
-
-	weighted_tsne* wt = new weighted_tsne();
 
 	// Set tSNE parameters
 	int N = 1024;
@@ -669,68 +678,105 @@ void test_create_two_stage() {
 	int output_dims = 2;
 	int iterations = 1000;
 
-	wt->tSNE.setTheta(0.5); // Barnes-hut
+	weighted_tsne* wt = get_tsne_instance(output_dims);
 
-	wt->tSNE_param._mom_switching_iter = 250;
-	wt->tSNE_param._remove_exaggeration_iter = 250;
-	wt->tSNE_param._embedding_dimensionality = output_dims;
+	//// Load the selected points
+	std::vector<weighted_tsne::scalar_type> selectedIndicesFloat;
+	read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/labels-3-1024.csv", N, 1, selectedIndicesFloat);
+	std::vector<int> selectedIndices(selectedIndicesFloat.begin(), selectedIndicesFloat.end());
 
-	// Load the selected points
-	std::vector<weighted_tsne::scalar_type> selectedIndices;
-	read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/labels-3-1024.csv", N, 1, selectedIndices);
-
-	// Set perplexities
+	//// Set perplexities
 	std::vector<float> perplexities(N, 40);
-	wt->prob_gen_param._perplexities = perplexities;
+	//wt->prob_gen_param._perplexities = perplexities;
 
 	std::vector<weighted_tsne::scalar_type> all_data;
 	read_bin(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-10k.bin", N_all, input_dims, all_data);
 
-	std::vector<weighted_tsne::scalar_type> selected_data(N * input_dims);
-	
-	for (int i = 0; i < selectedIndices.size(); i++) {
-		int index = (int)selectedIndices[i];
+	//std::vector<weighted_tsne::scalar_type> selected_data(N * input_dims);
+	//
+	//for (int i = 0; i < selectedIndices.size(); i++) {
+	//	int index = selectedIndices[i];
 
-		for (int j = 0; j < input_dims; j++) {
-			selected_data[i * input_dims + j] = all_data[index * input_dims + j];
-		}
-	}
+	//	for (int j = 0; j < input_dims; j++) {
+	//		selected_data[i * input_dims + j] = all_data[index * input_dims + j];
+	//	}
+	//}
 
-	save_as_csv(selected_data, N, input_dims, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/selection.csv");
+	//save_as_csv(selected_data, N, input_dims, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/selection.csv");
 
-	wt->initialise_tsne(selected_data, N, input_dims);
+	//wt->initialise_tsne(selected_data, N, input_dims);
 
-	//std::vector<float> one_weights(N, 1);
-	//wt->tSNE.setWeights(one_weights, one_weights, one_weights, one_weights); // attr avg, rep avg, attr all, rep all
+	////std::vector<float> one_weights(N, 1);
+	////wt->tSNE.setWeights(one_weights, one_weights, one_weights, one_weights); // attr avg, rep avg, attr all, rep all
 
 	float iteration_time = 0;
+
+	//// Run the actual algorithm
+	//{
+	//	hdi::utils::ScopedTimer<float, hdi::utils::Milliseconds> timer(iteration_time);
+
+	//	for (int i = 0; i < iterations; i++) {
+	//		if (i > 0 && i % 100 == 0)
+	//			hdi::utils::secureLogValue(&log, "Iteration", i);
+
+	//		wt->do_iteration();
+	//	}
+	//}
+
+	//std::vector<weighted_tsne::scalar_type> res = wt->embedding.getContainer();
+	//save_as_csv(res, N, output_dims, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding-selection.csv");
+
+	//hdi::utils::secureLogValue(&log, "Total iteration time (s): ", iteration_time / 1000.0f);
+	//hdi::utils::secureLogValue(&log, "Average iteration time (ms): ", iteration_time / (float)iterations);
+
+	//delete wt;
+	//wt = get_tsne_instance(output_dims);
+
+	// Rerun tsne on entire dataset, but lock the previous points to the location of the previous embedding
+	perplexities.resize(N_all, 40);
+	wt->prob_gen_param._perplexities = perplexities;
+
+	wt->initialise_tsne(all_data, N_all, input_dims);
+
+	//std::vector<weighted_tsne::scalar_type> selectionEmbedding;
+	//read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding-selection.csv", N, output_dims, selectionEmbedding);
+
+	//wt->set_locked_points(selectedIndices);
+	//wt->set_coordinates(selectedIndices, selectionEmbedding);
+
+	int j = 232;
+
+	iteration_time = 0;
 
 	// Run the actual algorithm
 	{
 		hdi::utils::ScopedTimer<float, hdi::utils::Milliseconds> timer(iteration_time);
 
-		for (int i = 0; i < iterations; i++) {
+		for (int i = 0; i < 500; i++) {
 			if (i > 0 && i % 100 == 0)
 				hdi::utils::secureLogValue(&log, "Iteration", i);
 
 			wt->do_iteration();
 		}
+
+		save_as_csv(wt->embedding.getContainer(), N_all, output_dims, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding-1.csv");
+		wt->set_locked_points(selectedIndices);
+
+		for (int i = 0; i < 500; i++) {
+			if (i > 0 && i % 100 == 0)
+				hdi::utils::secureLogValue(&log, "Iteration", i);
+
+			wt->do_iteration();
+		}
+
+		save_as_csv(wt->embedding.getContainer(), N_all, output_dims, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding-2.csv");
 	}
 
-	std::vector<weighted_tsne::scalar_type> res = wt->embedding.getContainer();
-	save_as_csv(res, N, output_dims, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding-selection.csv");
 
 	hdi::utils::secureLogValue(&log, "Total iteration time (s): ", iteration_time / 1000.0f);
 	hdi::utils::secureLogValue(&log, "Average iteration time (ms): ", iteration_time / (float)iterations);
 
-
-	// Rerun tsne on entire dataset, but lock the previous points to the location of the previous embedding
-	wt->initialise_tsne(all_data, N_all, input_dims);
-
-	wt->set_locked_points(selectedIndices);
-	wt->set_coordinates(selectedIndices, res);
-
-
+	delete wt;
 }
 
 int main() {

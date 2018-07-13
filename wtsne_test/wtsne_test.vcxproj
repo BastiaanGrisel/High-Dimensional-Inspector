@@ -133,6 +133,7 @@
     <ClCompile Include="weighted_tsne.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="tests.h" />
     <ClInclude Include="weighted_tsne.h" />
   </ItemGroup>
   <ItemGroup>

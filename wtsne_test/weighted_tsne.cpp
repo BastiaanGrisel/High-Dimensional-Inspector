@@ -147,6 +147,9 @@ void weighted_tsne::set_locked_points(std::vector<int> indices)
 
 void weighted_tsne::set_coordinates(std::vector<int> indices, std::vector<scalar_type> coordinates)
 {
+	for (int i = 0; i < indices.size(); i++) {
+		embedding.getContainer()[indices[i]] = coordinates[i];
+	}
 }
 
 float weighted_tsne::calculate_seq_error_max(int k, int N) {
