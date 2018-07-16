@@ -47,46 +47,15 @@ int main(int argc, char *argv[])
 {
 	try{
         QApplication app(argc, argv);
-        QIcon icon;
-        icon.addFile(":/hdi16.png");
-        icon.addFile(":/hdi32.png");
-        icon.addFile(":/hdi64.png");
-        icon.addFile(":/hdi128.png");
-        icon.addFile(":/hdi256.png");
-        app.setWindowIcon(icon);
 
         QCoreApplication::setApplicationName("Simple Embedding Viewer");
 		QCoreApplication::setApplicationVersion("0.1");
 
-		QCommandLineParser parser;
-        parser.setApplicationDescription("Point-based visualization of a 2D embedding");
-		parser.addHelpOption();
-		parser.addVersionOption();
-		parser.addPositionalArgument("embedding", QCoreApplication::translate("main", "Embedding."));
+		// Load dataset
+		const unsigned int num_data_points = 2;
 
-		// Process the actual command line arguments given by the user
-		parser.process(app);
-
-		const QStringList args = parser.positionalArguments();
-
-	////////////////////////////////////////////////
-	////////////////////////////////////////////////
-	////////////////////////////////////////////////
-
-		if(args.size()!=1){
-			std::cout << "Not enough arguments!" << std::endl;
-			return -1;
-		}
-
-        std::ifstream input_file (args[0].toStdString(), std::ios::in|std::ios::binary|std::ios::ate);
-
-        const unsigned int num_data_points = input_file.tellg()/sizeof(float)/2;
-        std::vector<float> data(num_data_points*2);
+		std::vector<float> data = { 1,1, 3,4 };
         std::vector<uint32_t> flags(num_data_points);
-
-        input_file.seekg (0, std::ios::beg);
-        input_file.read (reinterpret_cast<char*>(data.data()), sizeof(float) * data.size()*2);
-        input_file.close();
 
         float min_x(std::numeric_limits<float>::max());
         float max_x(-std::numeric_limits<float>::max());
@@ -100,6 +69,7 @@ int main(int argc, char *argv[])
             max_y = std::max(max_y,data[i*2+1]);
         }
 
+		// Get top right and bottom left
         auto tr = QVector2D(max_x,max_y);
         auto bl = QVector2D(min_x,min_y);
         auto offset = (tr-bl)*0.25;
@@ -120,7 +90,6 @@ int main(int argc, char *argv[])
         viewer.addDrawer(&drawer);
 
         return app.exec();
-		
 	}
 	catch(std::logic_error& ex){ std::cout << "Logic error: " << ex.what();}
 	catch(std::runtime_error& ex){ std::cout << "Runtime error: " << ex.what();}

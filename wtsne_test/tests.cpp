@@ -667,119 +667,12 @@ weighted_tsne* get_tsne_instance(int output_dims) {
 	return wt;
 }
 
-void test_create_two_stage() {
-	hdi::utils::CoutLog log;
+void lerp(std::vector<float> from, std::vector<float> to, std::vector<float> &res, float alpha) {
+	res.resize(from.size());
 
-	// Set tSNE parameters
-	int N = 1024;
-	int N_all = 10000;
-	int input_dims = 784;
-	int output_dims = 2;
-	int iterations = 1000;
-
-	weighted_tsne* wt = get_tsne_instance(output_dims);
-
-	//// Load the selected points
-	std::vector<weighted_tsne::scalar_type> selectedIndicesFloat;
-	read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/labels-3-1024.csv", N, 1, selectedIndicesFloat);
-	std::vector<int> selectedIndices(selectedIndicesFloat.begin(), selectedIndicesFloat.end());
-
-	//// Set perplexities
-	std::vector<float> perplexities(N, 40);
-	//wt->prob_gen_param._perplexities = perplexities;
-
-	std::vector<weighted_tsne::scalar_type> all_data;
-	read_bin(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-10k.bin", N_all, input_dims, all_data);
-
-	//std::vector<weighted_tsne::scalar_type> selected_data(N * input_dims);
-	//
-	//for (int i = 0; i < selectedIndices.size(); i++) {
-	//	int index = selectedIndices[i];
-
-	//	for (int j = 0; j < input_dims; j++) {
-	//		selected_data[i * input_dims + j] = all_data[index * input_dims + j];
-	//	}
-	//}
-
-	//save_as_csv(selected_data, N, input_dims, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/selection.csv");
-
-	//wt->initialise_tsne(selected_data, N, input_dims);
-
-	////std::vector<float> one_weights(N, 1);
-	////wt->tSNE.setWeights(one_weights, one_weights, one_weights, one_weights); // attr avg, rep avg, attr all, rep all
-
-	float iteration_time = 0;
-
-	//// Run the actual algorithm
-	//{
-	//	hdi::utils::ScopedTimer<float, hdi::utils::Milliseconds> timer(iteration_time);
-
-	//	for (int i = 0; i < iterations; i++) {
-	//		if (i > 0 && i % 100 == 0)
-	//			hdi::utils::secureLogValue(&log, "Iteration", i);
-
-	//		wt->do_iteration();
-	//	}
-	//}
-
-	//std::vector<weighted_tsne::scalar_type> res = wt->embedding.getContainer();
-	//save_as_csv(res, N, output_dims, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding-selection.csv");
-
-	//hdi::utils::secureLogValue(&log, "Total iteration time (s): ", iteration_time / 1000.0f);
-	//hdi::utils::secureLogValue(&log, "Average iteration time (ms): ", iteration_time / (float)iterations);
-
-	//delete wt;
-	//wt = get_tsne_instance(output_dims);
-
-	// Rerun tsne on entire dataset, but lock the previous points to the location of the previous embedding
-	perplexities.resize(N_all, 40);
-	wt->prob_gen_param._perplexities = perplexities;
-
-	wt->initialise_tsne(all_data, N_all, input_dims);
-
-	
-	//wt->set_locked_points(selectedIndices);
-	//wt->set_coordinates(selectedIndices, selectionEmbedding);
-
-	int j = 232;
-
-	iteration_time = 0;
-
-	// Run the actual algorithm
-	{
-		std::vector<weighted_tsne::scalar_type> selectionEmbedding;
-		read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding-selection.csv", N, output_dims, selectionEmbedding);
-
-		hdi::utils::ScopedTimer<float, hdi::utils::Milliseconds> timer(iteration_time);
-
-		for (int i = 0; i < 10; i++) {
-			if (i > 0 && i % 100 == 0)
-				hdi::utils::secureLogValue(&log, "Iteration", i);
-
-			wt->do_iteration();
-		}
-
-		save_as_csv(wt->embedding.getContainer(), N_all, output_dims, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding-1.csv");
-		
-
-
-	/*	wt->set_locked_points(selectedIndices);
-		wt->set_coordinates(selectedIndices, selectionEmbedding);
-
-		for (int i = 0; i < 500; i++) {
-			if (i > 0 && i % 100 == 0)
-				hdi::utils::secureLogValue(&log, "Iteration", i);
-
-			wt->do_iteration();
-		}
-
-		save_as_csv(wt->embedding.getContainer(), N_all, output_dims, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding-2.csv");*/
+	for (int i = 0; i < from.size(); i++) {
+		res[i] = (1 - alpha) * from[i] + alpha * to[i];
 	}
-
-	hdi::utils::secureLogValue(&log, "Total iteration time (s): ", iteration_time / 1000.0f);
-	hdi::utils::secureLogValue(&log, "Average iteration time (ms): ", iteration_time / (float)iterations);
-
-	delete wt;
 }
 
 void test_lock_points() {
@@ -839,77 +732,132 @@ void test_lock_points() {
 	delete wt;
 }
 
-void test_set_coordinates() {
+void create_embedding_selection() {
+	hdi::utils::CoutLog log;
+
+	// Set tSNE parameters
+	int N = 994;
+	int input_dims = 784;
+	int iterations = 1000;
 
 	weighted_tsne* wt = get_tsne_instance(2);
 
-	int N = 10000;
-	int d = 784;
+	// Load the selected points
+	std::vector<weighted_tsne::scalar_type> selectedIndicesFloat;
+	read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/labels-9-994.csv", N, 1, selectedIndicesFloat);
+	std::vector<int> selectedIndices(selectedIndicesFloat.begin(), selectedIndicesFloat.end());
+
+	// Load the entire dataset
 	std::vector<weighted_tsne::scalar_type> data;
-	read_bin(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-10k.bin", N, d, data);
+	read_bin(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-10k.bin", 10000, input_dims, data);
+
+	// Create subset
+	std::vector<weighted_tsne::scalar_type> data_selected(input_dims*selectedIndices.size());
+
+	for (int i = 0; i < selectedIndices.size(); i++) {
+		for (int j = 0; j < input_dims; j++) {
+			data_selected[input_dims * i + j] = data[input_dims * selectedIndices[i] + j];
+		}
+	}
+
+	std::vector<float> perplexities(N, 40);
+	wt->prob_gen_param._perplexities = perplexities;
+
+	float iteration_time = 0;
+
+	wt->initialise_tsne(data_selected, N, input_dims);
+
+	iteration_time = 0;
+
+	// Run the actual algorithm
+	{
+		hdi::utils::ScopedTimer<float, hdi::utils::Milliseconds> timer(iteration_time);
+		// More iterations
+		for (int i = 0; i < 1000; i++) {
+			if (i > 0 && i % 100 == 0)
+				hdi::utils::secureLogValue(&log, "Iteration", i);
+
+			wt->do_iteration();
+		}
+
+		save_as_csv(wt->embedding.getContainer(), N, 2, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding-selection.csv");
+	}
+
+	hdi::utils::secureLogValue(&log, "Total iteration time (s): ", iteration_time / 1000.0f);
+	hdi::utils::secureLogValue(&log, "Average iteration time (ms): ", iteration_time / (float)iterations);
+
+	delete wt;
+}
+
+void test_create_two_stage() {
+	hdi::utils::CoutLog log;
+
+	// Set tSNE parameters
+	int N = 10000;
+	int N_selected = 994;
+	int input_dims = 784;
+	int output_dims = 2;
+	int iterations = 1000;
+
+	weighted_tsne* wt = get_tsne_instance(output_dims);
+
+	// Load the selected points
+	std::vector<weighted_tsne::scalar_type> selectedIndicesFloat;
+	read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/labels-9-994.csv", N_selected, 1, selectedIndicesFloat);
+	std::vector<int> selectedIndices(selectedIndicesFloat.begin(), selectedIndicesFloat.end());
 
 	// Set perplexities
 	std::vector<float> perplexities(N, 40);
 	wt->prob_gen_param._perplexities = perplexities;
 
-	wt->initialise_tsne(data, N, d);
+	std::vector<weighted_tsne::scalar_type> data;
+	read_bin(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-10k.bin", N, input_dims, data);
 
-	// Initial iterations
-	for (int i = 0; i < 100; i++) {
-		wt->do_iteration();
+	float iteration_time = 0;
+
+	wt->initialise_tsne(data, N, input_dims);
+
+	iteration_time = 0;
+
+	// Run the actual algorithm
+	{
+		hdi::utils::ScopedTimer<float, hdi::utils::Milliseconds> timer(iteration_time);
+
+		std::vector<weighted_tsne::scalar_type> selectionEmbedding;
+		read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding-selection.csv", N_selected, output_dims, selectionEmbedding);
+
+		for (int i = 0; i < selectionEmbedding.size(); i++) {
+			selectionEmbedding[i] = 0.3 * selectionEmbedding[i];
+		}
+
+		wt->set_coordinates(selectedIndices, selectionEmbedding);
+		wt->set_locked_points(selectedIndices);
+
+		// More iterations
+		for (int i = 0; i < 1000; i++) {
+			if (i > 0 && i % 100 == 0)
+				hdi::utils::secureLogValue(&log, "Iteration", i);
+
+			wt->do_iteration();
+		}
+
+		save_as_csv(wt->embedding.getContainer(), N, output_dims, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding.csv");
 	}
 
-	// Set locked points
-	std::vector<int> selection = { 5, 10, 20 };
-	std::vector<float> coords = { 0,10, 5,5, 2,4 };
-	wt->set_coordinates(selection, coords);
-	wt->set_locked_points(selection);
-
-	// Print initial coordintes
-	std::cout << "Position 1:\n";
-
-	std::vector<float> embedding = wt->embedding.getContainer();
-
-	for (int index : selection) {
-		std::cout << std::to_string(embedding[index * 2]) << ", " << std::to_string(embedding[index * 2 + 1]) << "\n";
-	}
-
-	std::cout << "Control: " << std::to_string(embedding[1 * 2]) << ", " << std::to_string(embedding[1 * 2 + 1]) << "\n";
-
-	std::cout << "\n";
-
-	// Do some more iterations
-	for (int i = 0; i < 500; i++) {
-		wt->do_iteration();
-	}
-
-	// Print coordinates again
-	std::cout << "Position 2:\n";
-
-	std::vector<float> embedding2 = wt->embedding.getContainer();
-
-	for (int index : selection) {
-		std::cout << std::to_string(embedding2[index * 2]) << ", " << std::to_string(embedding2[index * 2 + 1]) << "\n";
-	}
-
-	std::cout << "Control: " << std::to_string(embedding2[1 * 2]) << ", " << std::to_string(embedding2[1 * 2 + 1]) << "\n";
+	hdi::utils::secureLogValue(&log, "Total iteration time (s): ", iteration_time / 1000.0f);
+	hdi::utils::secureLogValue(&log, "Average iteration time (ms): ", iteration_time / (float)iterations);
 
 	delete wt;
 }
+
 
 int main(int argc, char *argv[])
 {
 	//SetPriorityClass(GetCurrentProcess(), IDLE_PRIORITY_CLASS);
 	SetPriorityClass(GetCurrentProcess(), ABOVE_NORMAL_PRIORITY_CLASS);
 
-	//test_set_coordinates();
-	//test_lock_points();
-	//omp_set_num_threads(3);
-	//test_create_embedding();
-	//test_create_two_stage();
-	//test_jaccard_similarity();
-	//test_test_set_error();
-	//test_neighourhood_computation();
+	create_embedding_selection();
+	test_create_two_stage();
 
 	system("pause");
 }

@@ -62,4 +62,6 @@ public:
 
 	void compute_neighbours(std::vector<float> data, int N, int d, int k, std::vector<int> &res);
 	void compute_weight_falloff(std::vector<float> in_data, int N, int d, std::set<int> selected_indices, int k, std::vector<float> &weights_falloff);
+
+	int read_bin(std::wstring file_path, int N, int d, std::vector<weighted_tsne::scalar_type> &out);
 };

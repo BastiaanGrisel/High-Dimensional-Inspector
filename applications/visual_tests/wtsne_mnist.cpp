@@ -71,10 +71,10 @@ int main(int argc, char *argv[]){
 ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////
-        if(argc != 4){
+     /*   if(argc != 4){
             hdi::utils::secureLog(&log,"Not enough input parameters...");
             return 1;
-        }
+        }*/
         std::vector<QColor> color_per_digit;
         color_per_digit.push_back(qRgb(16,78,139));
         color_per_digit.push_back(qRgb(139,90,43));
@@ -87,11 +87,12 @@ int main(int argc, char *argv[]){
         color_per_digit.push_back(qRgb(20,20,20));
         color_per_digit.push_back(qRgb(0, 150, 255));
 
-        const int num_pics(std::atoi(argv[3]));
-        const int num_dimensions(784);
+		const int num_pics(10000);
+		const int num_dimensions(784);
 
-        std::ifstream file_data(argv[1], std::ios::in|std::ios::binary);
-        std::ifstream file_labels(argv[2], std::ios::in|std::ios::binary);
+		std::ifstream file_data(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-10k.bin", std::ios::in | std::ios::binary);
+		std::ifstream file_labels(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-10k-labels.bin", std::ios::in | std::ios::binary);
+
         if (!file_labels.is_open()){
             throw std::runtime_error("label file cannot be found");
         }
@@ -227,25 +228,25 @@ int main(int argc, char *argv[]){
         drawer.setPointSize(5);
         viewer.addDrawer(&drawer);
 
-        int iter = 0;
-        while(true){
-            tSNE.doAnIteration();
-            {//limits
-                std::vector<scalar_type> limits;
-                embedding.computeEmbeddingBBox(limits,0.25);
-                auto tr = QVector2D(limits[1],limits[3]);
-                auto bl = QVector2D(limits[0],limits[2]);
-                viewer.setTopRightCoordinates(tr);
-                viewer.setBottomLeftCoordinates(bl);
-            }
+        //int iter = 0;
+        //while(true){
+        //    tSNE.doAnIteration();
+        //    {//limits
+        //        std::vector<scalar_type> limits;
+        //        embedding.computeEmbeddingBBox(limits,0.25);
+        //        auto tr = QVector2D(limits[1],limits[3]);
+        //        auto bl = QVector2D(limits[0],limits[2]);
+        //        viewer.setTopRightCoordinates(tr);
+        //        viewer.setBottomLeftCoordinates(bl);
+        //    }
 
-            if((iter%10) == 0){
-                viewer.updateGL();
-                hdi::utils::secureLogValue(&log,"Iter",iter);
-            }
-            QApplication::processEvents();
-            ++iter;
-        }
+        //    if((iter%10) == 0){
+        //        viewer.updateGL();
+        //        hdi::utils::secureLogValue(&log,"Iter",iter);
+        //    }
+        //    QApplication::processEvents();
+        //    ++iter;
+        //}
 
         return app.exec();
     }

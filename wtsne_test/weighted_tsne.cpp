@@ -278,3 +278,20 @@ void weighted_tsne::compute_weight_falloff(std::vector<float> in_data, int N, in
 		}
 	}
 }
+
+int weighted_tsne::read_bin(std::wstring file_path, int N, int d, std::vector<weighted_tsne::scalar_type> &out) {
+	out.resize(N * d);
+
+	std::ifstream input_file(file_path, std::ios::in | std::ios::binary | std::ios::ate);
+
+	if (int(input_file.tellg()) != int(sizeof(weighted_tsne::scalar_type) * N * d)) {
+		std::cout << "Input file size doesn't agree with input parameters!" << std::endl;
+		return 1;
+	}
+
+	input_file.seekg(0, std::ios::beg);
+	input_file.read(reinterpret_cast<char*>(out.data()), sizeof(weighted_tsne::scalar_type) * N * d);
+	input_file.close();
+
+	return 0;
+}
