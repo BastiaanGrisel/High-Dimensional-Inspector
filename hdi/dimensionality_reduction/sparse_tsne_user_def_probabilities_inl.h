@@ -461,6 +461,18 @@ namespace hdi{
 				_locked_points[index] = true;
 			}
 		}
+		template<typename scalar, typename sparse_scalar_matrix>
+		inline void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::setEmbeddingCoordinates(std::vector<int> point_indices, std::vector<scalar_type> coordinates)
+		{
+			const int dim = _params._embedding_dimensionality;
+
+			// For every point_index, there is "dim" coordinates
+			for (int i = 0; i < point_indices.size(); i++) {
+				for (int j = 0; j < dim; j++) {
+					(*_embedding_container)[point_indices[i] * dim + j] = coordinates[i * dim + j];
+				}
+			}
+		}
 	}
 }
 #endif 

@@ -92,6 +92,8 @@ namespace hdi{
 
 			void setLockedPoints(std::vector<int> indices);
 
+			void setEmbeddingCoordinates(std::vector<int> point_indices, std::vector<scalar_type> coordinates);
+
 			//! Get the position in the embedding for a data point
 			void getEmbeddingPosition(scalar_vector_type& embedding_position, data_handle_type handle)const;
 

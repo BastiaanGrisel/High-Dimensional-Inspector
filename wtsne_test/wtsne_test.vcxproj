@@ -134,6 +134,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tests.h" />
+    <ClInclude Include="viewer.h" />
     <ClInclude Include="weighted_tsne.h" />
   </ItemGroup>
   <ItemGroup>

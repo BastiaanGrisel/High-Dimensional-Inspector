@@ -84,7 +84,6 @@ int read_bin(std::wstring file_path, int N, int d, std::vector<weighted_tsne::sc
 	return 0;
 }
 
-
 void test_jaccard_similarity() {
 	std::vector<int> A = { 1, 2, 3, 4, 5 };
 	std::vector<int> B = { 1, 2, 3, 6, 7 };
@@ -738,9 +737,7 @@ void test_create_two_stage() {
 
 	wt->initialise_tsne(all_data, N_all, input_dims);
 
-	//std::vector<weighted_tsne::scalar_type> selectionEmbedding;
-	//read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding-selection.csv", N, output_dims, selectionEmbedding);
-
+	
 	//wt->set_locked_points(selectedIndices);
 	//wt->set_coordinates(selectedIndices, selectionEmbedding);
 
@@ -750,9 +747,12 @@ void test_create_two_stage() {
 
 	// Run the actual algorithm
 	{
+		std::vector<weighted_tsne::scalar_type> selectionEmbedding;
+		read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding-selection.csv", N, output_dims, selectionEmbedding);
+
 		hdi::utils::ScopedTimer<float, hdi::utils::Milliseconds> timer(iteration_time);
 
-		for (int i = 0; i < 500; i++) {
+		for (int i = 0; i < 10; i++) {
 			if (i > 0 && i % 100 == 0)
 				hdi::utils::secureLogValue(&log, "Iteration", i);
 
@@ -760,7 +760,11 @@ void test_create_two_stage() {
 		}
 
 		save_as_csv(wt->embedding.getContainer(), N_all, output_dims, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding-1.csv");
-		wt->set_locked_points(selectedIndices);
+		
+
+
+	/*	wt->set_locked_points(selectedIndices);
+		wt->set_coordinates(selectedIndices, selectionEmbedding);
 
 		for (int i = 0; i < 500; i++) {
 			if (i > 0 && i % 100 == 0)
@@ -769,9 +773,8 @@ void test_create_two_stage() {
 			wt->do_iteration();
 		}
 
-		save_as_csv(wt->embedding.getContainer(), N_all, output_dims, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding-2.csv");
+		save_as_csv(wt->embedding.getContainer(), N_all, output_dims, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding-2.csv");*/
 	}
-
 
 	hdi::utils::secureLogValue(&log, "Total iteration time (s): ", iteration_time / 1000.0f);
 	hdi::utils::secureLogValue(&log, "Average iteration time (ms): ", iteration_time / (float)iterations);
@@ -779,14 +782,131 @@ void test_create_two_stage() {
 	delete wt;
 }
 
-int main() {
+void test_lock_points() {
+	// Comment out the embedding zerocentered lines for a fair comparison
 
+	weighted_tsne* wt = get_tsne_instance(2);
+
+	int N = 10000;
+	int d = 784;
+	std::vector<weighted_tsne::scalar_type> data;
+	read_bin(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-10k.bin", N, d, data);
+
+	// Set perplexities
+	std::vector<float> perplexities(N, 40);
+	wt->prob_gen_param._perplexities = perplexities;
+
+	wt->initialise_tsne(data, N, d);
+
+	// Initial iterations
+	for (int i = 0; i < 100; i++) {
+		wt->do_iteration();
+	}
+
+	// Set locked points
+	std::vector<int> selection = { 5, 10, 20 };
+	wt->set_locked_points(selection);
+
+	// Print initial coordintes
+	std::cout << "Position 1:\n";
+
+	std::vector<float> embedding = wt->embedding.getContainer();
+
+	for (int index : selection) {
+		std::cout << std::to_string(embedding[index * 2]) << ", " << std::to_string(embedding[index * 2 + 1]) << "\n";
+	}
+
+	std::cout << "Control: " << std::to_string(embedding[1 * 2]) << ", " << std::to_string(embedding[1 * 2 + 1]) << "\n";
+
+	std::cout << "\n";
+
+	// Do some more iterations
+	for (int i = 0; i < 500; i++) {
+		wt->do_iteration();
+	}
+
+	// Print coordinates again
+	std::cout << "Position 2:\n";
+
+	std::vector<float> embedding2 = wt->embedding.getContainer();
+
+	for (int index : selection) {
+		std::cout << std::to_string(embedding2[index * 2]) << ", " << std::to_string(embedding2[index * 2 + 1]) << "\n";
+	}
+
+	std::cout << "Control: " << std::to_string(embedding2[1 * 2]) << ", " << std::to_string(embedding2[1 * 2 + 1]) << "\n";
+
+	delete wt;
+}
+
+void test_set_coordinates() {
+
+	weighted_tsne* wt = get_tsne_instance(2);
+
+	int N = 10000;
+	int d = 784;
+	std::vector<weighted_tsne::scalar_type> data;
+	read_bin(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-10k.bin", N, d, data);
+
+	// Set perplexities
+	std::vector<float> perplexities(N, 40);
+	wt->prob_gen_param._perplexities = perplexities;
+
+	wt->initialise_tsne(data, N, d);
+
+	// Initial iterations
+	for (int i = 0; i < 100; i++) {
+		wt->do_iteration();
+	}
+
+	// Set locked points
+	std::vector<int> selection = { 5, 10, 20 };
+	std::vector<float> coords = { 0,10, 5,5, 2,4 };
+	wt->set_coordinates(selection, coords);
+	wt->set_locked_points(selection);
+
+	// Print initial coordintes
+	std::cout << "Position 1:\n";
+
+	std::vector<float> embedding = wt->embedding.getContainer();
+
+	for (int index : selection) {
+		std::cout << std::to_string(embedding[index * 2]) << ", " << std::to_string(embedding[index * 2 + 1]) << "\n";
+	}
+
+	std::cout << "Control: " << std::to_string(embedding[1 * 2]) << ", " << std::to_string(embedding[1 * 2 + 1]) << "\n";
+
+	std::cout << "\n";
+
+	// Do some more iterations
+	for (int i = 0; i < 500; i++) {
+		wt->do_iteration();
+	}
+
+	// Print coordinates again
+	std::cout << "Position 2:\n";
+
+	std::vector<float> embedding2 = wt->embedding.getContainer();
+
+	for (int index : selection) {
+		std::cout << std::to_string(embedding2[index * 2]) << ", " << std::to_string(embedding2[index * 2 + 1]) << "\n";
+	}
+
+	std::cout << "Control: " << std::to_string(embedding2[1 * 2]) << ", " << std::to_string(embedding2[1 * 2 + 1]) << "\n";
+
+	delete wt;
+}
+
+int main(int argc, char *argv[])
+{
 	//SetPriorityClass(GetCurrentProcess(), IDLE_PRIORITY_CLASS);
 	SetPriorityClass(GetCurrentProcess(), ABOVE_NORMAL_PRIORITY_CLASS);
 
+	//test_set_coordinates();
+	//test_lock_points();
 	//omp_set_num_threads(3);
 	//test_create_embedding();
-	test_create_two_stage();
+	//test_create_two_stage();
 	//test_jaccard_similarity();
 	//test_test_set_error();
 	//test_neighourhood_computation();
