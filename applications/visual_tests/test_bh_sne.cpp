@@ -250,7 +250,7 @@ int main(int argc, char *argv[]){
         drawer.initialize(viewer.context());
         drawer.setData(wt->embedding.getContainer().data(), embedding_colors_for_viz.data(), flags.data(), N);
         drawer.setAlpha(0.8);
-        drawer.setPointSize(10);
+        drawer.setPointSize(5);
         viewer.addDrawer(&drawer);
 
         int iter = 0;
