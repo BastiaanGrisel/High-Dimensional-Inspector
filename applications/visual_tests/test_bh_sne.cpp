@@ -206,9 +206,10 @@ int main(int argc, char *argv[]){
 		wt->initialise_tsne(data, N, input_dims);
 
 		// Load selected points
-		std::vector<weighted_tsne::scalar_type> selectedIndicesFloat;
-		wt->read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/labels-9-994.csv", N_selected, 1, selectedIndicesFloat);
-		std::vector<int> selectedIndices(selectedIndicesFloat.begin(), selectedIndicesFloat.end());
+		//std::vector<weighted_tsne::scalar_type> selectedIndicesFloat;
+		//wt->read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/labels-9-994.csv", N_selected, 1, selectedIndicesFloat);
+		//std::vector<int> selectedIndices(selectedIndicesFloat.begin(), selectedIndicesFloat.end());
+		std::vector<int> selectedIndices = { 4 };
 
 		std::vector<weighted_tsne::scalar_type> selectionEmbeddingFinal;
 		wt->read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding-selection.csv", N_selected, output_dims, selectionEmbeddingFinal);
@@ -224,19 +225,19 @@ int main(int argc, char *argv[]){
 			}*/
 		}
 
-		wt->set_coordinates(selectedIndices, selectionEmbeddingStart);
+		wt->set_coordinates(selectedIndices, std::vector<float>{ 0,0 });
 		wt->set_locked_points(selectedIndices);
 
 		// Set weights
-		//std::vector<float> one_weights(N, 1);
-		//std::vector<float> high_weights(N, 2);
-		//std::vector<float> selected_high(N, 0);
+		std::vector<float> one_weights(N, 1);
+		std::vector<float> high_weights(N, 2);
+		std::vector<float> selected_high(N, 0);
 
-		//for (int index : selectedIndices) {
-		//	selected_high[index] = 10;
-		//}
+		for (int index : selectedIndices) {
+			selected_high[index] = 2;
+		}
 
-		//wt->tSNE.setWeights(selected_high, selected_high, one_weights, one_weights);
+		wt->tSNE.setWeights(selected_high, selected_high, one_weights, one_weights);
 
 /*
 
