@@ -428,12 +428,12 @@ namespace hdi{
                 (*_embedding_container)[i] += static_cast<scalar_type>(_previous_gradient[i] * mult);
 			}
 
-            //MAGIC NUMBER
-            if(exaggerationFactor() > 1.2){
-                _embedding->scaleIfSmallerThan(0.1);
-            }else{
-                _embedding->zeroCentered();
-            }
+            ////MAGIC NUMBER
+            //if(exaggerationFactor() > 1.2){
+            //    _embedding->scaleIfSmallerThan(0.1);
+            //}else{
+            //    _embedding->zeroCentered();
+            //}
 
 			++_iteration;
 		}

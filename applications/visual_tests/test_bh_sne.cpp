@@ -74,17 +74,17 @@ int main(int argc, char *argv[]){
             hdi::utils::secureLog(&log,"Not enough input parameters...");
             return 1;
         }*/
-  //      std::vector<QColor> color_per_digit;
-  //      color_per_digit.push_back(qRgb(16,78,139));
-  //      color_per_digit.push_back(qRgb(139,90,43));
-  //      color_per_digit.push_back(qRgb(138,43,226));
-  //      color_per_digit.push_back(qRgb(0,128,0));
-  //      color_per_digit.push_back(qRgb(255,150,0));
-  //      color_per_digit.push_back(qRgb(204,40,40));
-  //      color_per_digit.push_back(qRgb(131,139,131));
-  //      color_per_digit.push_back(qRgb(0,205,0));
-  //      color_per_digit.push_back(qRgb(20,20,20));
-  //      color_per_digit.push_back(qRgb(0, 150, 255));
+        std::vector<QColor> color_per_digit;
+        color_per_digit.push_back(qRgb(16,78,139));
+        color_per_digit.push_back(qRgb(139,90,43));
+        color_per_digit.push_back(qRgb(138,43,226));
+        color_per_digit.push_back(qRgb(0,128,0));
+        color_per_digit.push_back(qRgb(255,150,0));
+        color_per_digit.push_back(qRgb(204,40,40));
+        color_per_digit.push_back(qRgb(131,139,131));
+        color_per_digit.push_back(qRgb(0,205,0));
+        color_per_digit.push_back(qRgb(20,20,20));
+        color_per_digit.push_back(qRgb(0, 150, 255));
 
   //      const int num_pics(10000);
   //      const int num_dimensions(784);
@@ -197,6 +197,10 @@ int main(int argc, char *argv[]){
 		std::vector<weighted_tsne::scalar_type> data;
 		wt->read_bin(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-10k.bin", N, input_dims, data);
 
+		std::vector<weighted_tsne::scalar_type> labels;
+		wt->read_bin(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-10k-labels.bin", N, 1, labels);
+
+
 		float iteration_time = 0;
 
 		wt->initialise_tsne(data, N, input_dims);
@@ -212,11 +216,27 @@ int main(int argc, char *argv[]){
 		std::vector<weighted_tsne::scalar_type> selectionEmbeddingCurrent(selectionEmbeddingFinal.size());
 
 		for (int i = 0; i < selectionEmbeddingStart.size(); i++) {
-			selectionEmbeddingStart[i] = 0.05f * selectionEmbeddingFinal[i];
+			selectionEmbeddingStart[i] = 0.2f * selectionEmbeddingFinal[i];
+			selectionEmbeddingFinal[i] = 0.2f * selectionEmbeddingFinal[i];
+
+	/*		if (i % 1 == 0) {
+				selectionEmbeddingStart[i] += 1.0;
+			}*/
 		}
 
 		wt->set_coordinates(selectedIndices, selectionEmbeddingStart);
 		wt->set_locked_points(selectedIndices);
+
+		// Set weights
+		//std::vector<float> one_weights(N, 1);
+		//std::vector<float> high_weights(N, 2);
+		//std::vector<float> selected_high(N, 0);
+
+		//for (int index : selectedIndices) {
+		//	selected_high[index] = 10;
+		//}
+
+		//wt->tSNE.setWeights(selected_high, selected_high, one_weights, one_weights);
 
 /*
 
@@ -255,12 +275,19 @@ int main(int argc, char *argv[]){
         std::vector<uint32_t> flags(N, 0);
         std::vector<float> embedding_colors_for_viz(N*3,0);
 
-		for (int index : selectedIndices) {
-			QColor color = qRgb(255, 50, 50);
-			embedding_colors_for_viz[index * 3 + 0] = color.redF();
-			embedding_colors_for_viz[index * 3 + 1] = color.greenF();
-			embedding_colors_for_viz[index * 3 + 2] = color.blueF();
+		for (int i = 0; i < N; i++) {
+			QColor color = color_per_digit[(int) labels[i]];
+			embedding_colors_for_viz[i * 3 + 0] = color.redF();
+			embedding_colors_for_viz[i * 3 + 1] = color.greenF();
+			embedding_colors_for_viz[i * 3 + 2] = color.blueF();
 		}
+
+		//for (int index : selectedIndices) {
+		//	QColor color = qRgb(255, 50, 50);
+		//	embedding_colors_for_viz[index * 3 + 0] = color.redF();
+		//	embedding_colors_for_viz[index * 3 + 1] = color.greenF();
+		//	embedding_colors_for_viz[index * 3 + 2] = color.blueF();
+		//}
 
         //for(int i = 0; i < N; ++i){
         //    int label = labels[i];
@@ -281,10 +308,11 @@ int main(int argc, char *argv[]){
         while(true){
 			wt->do_iteration();
 
-			float alpha = (iter - 350) / 300.0;
-			alpha = alpha > 1.0 ? 1.0 : (alpha < 0.0 ? 0.0 : alpha);
-			wt->lerp(selectionEmbeddingStart, selectionEmbeddingFinal, selectionEmbeddingCurrent, alpha * 0.25f);
-			wt->set_coordinates(selectedIndices, selectionEmbeddingCurrent);
+			// Selection growing
+			//float alpha = (iter - 350) / 300.0;
+			//alpha = alpha > 1.0 ? 1.0 : (alpha < 0.0 ? 0.0 : alpha);
+			//wt->lerp(selectionEmbeddingStart, selectionEmbeddingFinal, selectionEmbeddingCurrent, alpha);
+			//wt->set_coordinates(selectedIndices, selectionEmbeddingCurrent);
 
             {//limits
                 std::vector<scalar_type> limits;
