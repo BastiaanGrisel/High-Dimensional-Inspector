@@ -212,7 +212,7 @@ int main(int argc, char *argv[]){
 		std::vector<weighted_tsne::scalar_type> selectionEmbeddingCurrent(selectionEmbeddingFinal.size());
 
 		for (int i = 0; i < selectionEmbeddingStart.size(); i++) {
-			selectionEmbeddingStart[i] = 0.001 * selectionEmbeddingFinal[i];
+			selectionEmbeddingStart[i] = 0.05f * selectionEmbeddingFinal[i];
 		}
 
 		wt->set_coordinates(selectedIndices, selectionEmbeddingStart);
@@ -255,6 +255,13 @@ int main(int argc, char *argv[]){
         std::vector<uint32_t> flags(N, 0);
         std::vector<float> embedding_colors_for_viz(N*3,0);
 
+		for (int index : selectedIndices) {
+			QColor color = qRgb(255, 50, 50);
+			embedding_colors_for_viz[index * 3 + 0] = color.redF();
+			embedding_colors_for_viz[index * 3 + 1] = color.greenF();
+			embedding_colors_for_viz[index * 3 + 2] = color.blueF();
+		}
+
         //for(int i = 0; i < N; ++i){
         //    int label = labels[i];
         //    auto color = color_per_digit[label];
@@ -274,9 +281,10 @@ int main(int argc, char *argv[]){
         while(true){
 			wt->do_iteration();
 
-			//float alpha = std::max((iter - 250) / 300.0, 0.0);
-			//wt->lerp(selectionEmbeddingStart, selectionEmbeddingFinal, selectionEmbeddingCurrent, alpha);
-			//wt->set_coordinates(selectedIndices, selectionEmbeddingCurrent);
+			float alpha = (iter - 350) / 300.0;
+			alpha = alpha > 1.0 ? 1.0 : (alpha < 0.0 ? 0.0 : alpha);
+			wt->lerp(selectionEmbeddingStart, selectionEmbeddingFinal, selectionEmbeddingCurrent, alpha * 0.25f);
+			wt->set_coordinates(selectedIndices, selectionEmbeddingCurrent);
 
             {//limits
                 std::vector<scalar_type> limits;
