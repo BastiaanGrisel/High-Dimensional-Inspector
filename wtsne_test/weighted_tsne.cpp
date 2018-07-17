@@ -295,3 +295,33 @@ int weighted_tsne::read_bin(std::wstring file_path, int N, int d, std::vector<we
 
 	return 0;
 }
+
+int weighted_tsne::read_csv(std::wstring file_path, int N, int d, std::vector<weighted_tsne::scalar_type> &out) {
+	out.resize(N * d);
+
+	std::ifstream in_file(file_path, std::ios::in);
+	std::string line;
+
+	int i = 0;
+
+	while (std::getline(in_file, line)) {
+		std::stringstream          line_stream(line);
+		std::string                cell;
+
+		while (std::getline(line_stream, cell, ',')) {
+			float v = std::atof(cell.c_str());
+			out[i] = v;
+			i++;
+		}
+	}
+
+	return 0;
+}
+
+void weighted_tsne::lerp(std::vector<float> from, std::vector<float> to, std::vector<float> &res, float alpha) {
+	res.resize(from.size());
+
+	for (int i = 0; i < from.size(); i++) {
+		res[i] = (1 - alpha) * from[i] + alpha * to[i];
+	}
+}

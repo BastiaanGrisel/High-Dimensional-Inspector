@@ -179,6 +179,7 @@ int main(int argc, char *argv[]){
 
 		// Set tSNE parameters
 		int N = 10000;
+		int N_selected = 994;
 		int input_dims = 784;
 		int output_dims = 2;
 		int iterations = 1000;
@@ -200,6 +201,22 @@ int main(int argc, char *argv[]){
 
 		wt->initialise_tsne(data, N, input_dims);
 
+		// Load selected points
+		std::vector<weighted_tsne::scalar_type> selectedIndicesFloat;
+		wt->read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/labels-9-994.csv", N_selected, 1, selectedIndicesFloat);
+		std::vector<int> selectedIndices(selectedIndicesFloat.begin(), selectedIndicesFloat.end());
+
+		std::vector<weighted_tsne::scalar_type> selectionEmbeddingFinal;
+		wt->read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding-selection.csv", N_selected, output_dims, selectionEmbeddingFinal);
+		std::vector<weighted_tsne::scalar_type> selectionEmbeddingStart(selectionEmbeddingFinal.size());
+		std::vector<weighted_tsne::scalar_type> selectionEmbeddingCurrent(selectionEmbeddingFinal.size());
+
+		for (int i = 0; i < selectionEmbeddingStart.size(); i++) {
+			selectionEmbeddingStart[i] = 0.001 * selectionEmbeddingFinal[i];
+		}
+
+		wt->set_coordinates(selectedIndices, selectionEmbeddingStart);
+		wt->set_locked_points(selectedIndices);
 
 /*
 
@@ -256,6 +273,10 @@ int main(int argc, char *argv[]){
         int iter = 0;
         while(true){
 			wt->do_iteration();
+
+			//float alpha = std::max((iter - 250) / 300.0, 0.0);
+			//wt->lerp(selectionEmbeddingStart, selectionEmbeddingFinal, selectionEmbeddingCurrent, alpha);
+			//wt->set_coordinates(selectedIndices, selectionEmbeddingCurrent);
 
             {//limits
                 std::vector<scalar_type> limits;
