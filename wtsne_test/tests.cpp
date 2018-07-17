@@ -315,7 +315,8 @@ void test_create_embedding() {
 	hdi::utils::secureLogValue(&log, "k", falloff_k);
 
 	std::vector<float> weights_falloff_hd(N, 0);
-	wt->compute_weight_falloff(wt->data, N, input_dims, selectedPointWithNeighbours, falloff_k, weights_falloff_hd);
+
+	//wt->compute_weight_falloff(wt->data, N, input_dims, selectedPointWithNeighbours.begin(), falloff_k, weights_falloff_hd);
 
 	// High weights with falloff
 	std::vector<float> selected_high_falloff(N, 1);

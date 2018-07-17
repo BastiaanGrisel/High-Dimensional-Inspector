@@ -249,11 +249,11 @@ void weighted_tsne::compute_neighbours(std::vector<float> data, int N, int d, in
 	temp_prob_gen_param._perplexities = temp_perplexity;
 	temp_prob_gen_param._perplexity_multiplier = 1;
 
-	// computeHighDimensionalDistances includes the point itself as its nearest neighbour
+	// computeHighDimensionalDistances includes the point itself as its nearest neighbour (returns k+1 neighbours)
 	prob_gen.computeHighDimensionalDistances(data.data(), d, N, distances_squared, res, temp_prob_gen_param);
 }
 
-void weighted_tsne::compute_weight_falloff(std::vector<float> in_data, int N, int d, std::set<int> selected_indices, int k, std::vector<float> &weights_falloff) {
+void weighted_tsne::compute_weight_falloff(std::vector<float> in_data, int N, int d, std::vector<int> selected_indices, int k, std::vector<float> &weights_falloff) {
 	std::vector<int> nn;
 	compute_neighbours(in_data, N, d, k, nn);// TODO: inly calculate neighbours of selectedIndices, not of all points
 

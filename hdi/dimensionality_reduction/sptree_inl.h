@@ -432,20 +432,37 @@ namespace hdi{
 				// Estimate for Z inside this tree: N_cell / (1 + ||y_i - y_cell||^2)
 				// Total formula: (N_cell * (y_i - y_cell)) / (1 + ||y_i - y_cell||^2)^2
 
-				// Compute and add t-SNE force between point and current node
+				//// Compute and add t-SNE force between point and current cell
+				//float D = 1.0 / (1.0 + sq_distance);
+
+				//hp_scalar_type mult = cum_size * D;
+
+				//// sum_Q holds the estimate for Z (also based on Barnes-Hut)
+				//sum_Q += mult;
+
+				//mult *= D;
+				//
+				//// Calculate weight: W_i,cell = (sum_j w_j + N_cell * w_i) / (2 * N_cell)
+				//float weight = (cum_rep_weight + cum_size * rep_weights[point_index]) / (2 * cum_size);
+
+				//for (unsigned int d = 0; d < _emb_dimension; d++) 
+				//	neg_f[d] += weight * mult * distance[d];
+
+				// Calculate weight: W_i,cell = (sum_j w_j + N_cell * w_i) / 2
+				float weight = (cum_rep_weight + cum_size * rep_weights[point_index]) / 2.0;
+
+				// Compute and add t-SNE force between point and current cell
 				float D = 1.0 / (1.0 + sq_distance);
-				hp_scalar_type mult = cum_size * D;
+
+				float Z_estimate = weight * D;
 
 				// sum_Q holds the estimate for Z (also based on Barnes-Hut)
-				sum_Q += mult;
+				sum_Q += Z_estimate;
 
-				mult *= D;
-				
-				// Calculate weight: W_i,cell = (sum_j w_j + N_cell * w_i) / (2 * N_cell)
-				float weight = (cum_rep_weight + cum_size * rep_weights[point_index]) / (2 * cum_size);
+				float FrepZ_estimate = weight * D * D;
 
-				for (unsigned int d = 0; d < _emb_dimension; d++) 
-					neg_f[d] += weight * mult * distance[d];
+				for (unsigned int d = 0; d < _emb_dimension; d++)
+					neg_f[d] += FrepZ_estimate * distance[d];
 
             } else {
 

@@ -185,6 +185,7 @@ int main(int argc, char *argv[]){
 		int iterations = 1000;
 
 		wt->tSNE.setTheta(0.5); // Barnes-hut
+		//wt->tSNE.setTheta(0); // Exact
 
 		wt->tSNE_param._mom_switching_iter = 250;
 		wt->tSNE_param._remove_exaggeration_iter = 250;
@@ -206,10 +207,10 @@ int main(int argc, char *argv[]){
 		wt->initialise_tsne(data, N, input_dims);
 
 		// Load selected points
-		//std::vector<weighted_tsne::scalar_type> selectedIndicesFloat;
-		//wt->read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/labels-9-994.csv", N_selected, 1, selectedIndicesFloat);
-		//std::vector<int> selectedIndices(selectedIndicesFloat.begin(), selectedIndicesFloat.end());
-		std::vector<int> selectedIndices = { 4 };
+		std::vector<weighted_tsne::scalar_type> selectedIndicesFloat;
+		wt->read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/labels-9-994.csv", N_selected, 1, selectedIndicesFloat);
+		std::vector<int> selectedIndices(selectedIndicesFloat.begin(), selectedIndicesFloat.end());
+		//std::vector<int> selectedIndices = { 4 };
 
 		std::vector<weighted_tsne::scalar_type> selectionEmbeddingFinal;
 		wt->read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding-selection.csv", N_selected, output_dims, selectionEmbeddingFinal);
@@ -217,30 +218,57 @@ int main(int argc, char *argv[]){
 		std::vector<weighted_tsne::scalar_type> selectionEmbeddingCurrent(selectionEmbeddingFinal.size());
 
 		for (int i = 0; i < selectionEmbeddingStart.size(); i++) {
-			selectionEmbeddingStart[i] = 0.2f * selectionEmbeddingFinal[i];
+			selectionEmbeddingStart[i] = 0.0001f * selectionEmbeddingFinal[i];
 			selectionEmbeddingFinal[i] = 0.2f * selectionEmbeddingFinal[i];
 
-	/*		if (i % 1 == 0) {
-				selectionEmbeddingStart[i] += 1.0;
-			}*/
+			//if (i % 1 == 0) {
+			//	selectionEmbeddingStart[i] += 1.0;
+			//}
 		}
 
-		wt->set_coordinates(selectedIndices, std::vector<float>{ 0,0 });
+		wt->set_coordinates(selectedIndices, selectionEmbeddingStart);
+		//wt->set_coordinates(selectedIndices, std::vector<float>{ 0,0 });
 		wt->set_locked_points(selectedIndices);
+
+
+		// Add nearest neighbours to selection
+		//int k = 50;
+		//std::vector<int> nearestNeighbours;
+		//wt->compute_neighbours(data, N, input_dims, k, nearestNeighbours);
+
+		//std::set<int> selectedIndicesWithNeighbours;
+		//for (int index : selectedIndices) {
+		//	for (int i = 0; i < k; i++) {
+		//		selectedIndicesWithNeighbours.insert(nearestNeighbours[index * (k + 1) + i]);
+		//	}
+		//}
+
 
 		// Set weights
 		std::vector<float> one_weights(N, 1);
 		std::vector<float> high_weights(N, 2);
-		std::vector<float> selected_high(N, 0);
+		std::vector<float> selected_high(N, 0.1);
+		//std::vector<float> selected_high_extended(N, 0);
+		std::vector<float> lerp_weights(N, 1);
 
 		for (int index : selectedIndices) {
-			selected_high[index] = 2;
+			selected_high[index] = 2.0;
 		}
 
-		wt->tSNE.setWeights(selected_high, selected_high, one_weights, one_weights);
+	/*	for (int index : selectedIndicesWithNeighbours) {
+			selected_high_extended[index] = 2;
+		}
+*/
+		// Weight falloff
+		//std::vector<float> weights_falloff;
+		//wt->compute_weight_falloff(data, N, input_dims, selectedIndices, 100, weights_falloff);
+		//for (int i = 0; i < weights_falloff.size(); i++) {
+		//	weights_falloff[i] = 2 * weights_falloff[i];
+		//}
+
+		wt->tSNE.setWeights(one_weights, one_weights, one_weights, one_weights);
 
 /*
-
         hdi::dr::HDJointProbabilityGenerator<scalar_type>::sparse_scalar_matrix_type probability;
         hdi::dr::HDJointProbabilityGenerator<scalar_type> prob_gen;
         prob_gen.setLogger(&log);
@@ -277,7 +305,13 @@ int main(int argc, char *argv[]){
         std::vector<float> embedding_colors_for_viz(N*3,0);
 
 		for (int i = 0; i < N; i++) {
+			// Color by label
 			QColor color = color_per_digit[(int) labels[i]];
+
+			// Color by weight
+			//QColor color(qRgb(255, 10, 10));
+			//color.setHsv(255, 255, selected_high[i]*127.0);
+
 			embedding_colors_for_viz[i * 3 + 0] = color.redF();
 			embedding_colors_for_viz[i * 3 + 1] = color.greenF();
 			embedding_colors_for_viz[i * 3 + 2] = color.blueF();
@@ -310,10 +344,21 @@ int main(int argc, char *argv[]){
 			wt->do_iteration();
 
 			// Selection growing
-			//float alpha = (iter - 350) / 300.0;
-			//alpha = alpha > 1.0 ? 1.0 : (alpha < 0.0 ? 0.0 : alpha);
-			//wt->lerp(selectionEmbeddingStart, selectionEmbeddingFinal, selectionEmbeddingCurrent, alpha);
-			//wt->set_coordinates(selectedIndices, selectionEmbeddingCurrent);
+			float alpha = (iter - 350) / 300.0;
+			alpha = alpha > 1.0 ? 1.0 : (alpha < 0.0 ? 0.0 : alpha);
+
+			// Set point location at every iteration < 800
+			if (iter < 800) {
+				wt->lerp(selectionEmbeddingStart, selectionEmbeddingFinal, selectionEmbeddingCurrent, alpha);
+				wt->set_coordinates(selectedIndices, selectionEmbeddingCurrent);
+			}
+		/*	else if (iter == 800) {
+				wt->set_locked_points(std::vector<int>{});
+			}*/
+
+			// Lerp the weights
+			wt->lerp(one_weights, selected_high, lerp_weights, alpha);
+			wt->tSNE.setWeights(lerp_weights, lerp_weights, one_weights, one_weights);
 
             {//limits
                 std::vector<scalar_type> limits;
