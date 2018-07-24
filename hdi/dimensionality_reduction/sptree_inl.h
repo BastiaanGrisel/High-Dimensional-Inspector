@@ -267,7 +267,10 @@ namespace hdi{
 
 				// Update the center of mass (weighted average)
 				// y_cell = (y_cell * w_cell + w_i * y_i) / (w_cell + w_i)
-				//for (unsigned int d = 0; d < _emb_dimension; d++) _center_of_mass[d] = (_center_of_mass[d] * cum_rep_weight + point_weights[new_index] * point[d]) / (cum_rep_weight + point_weights[new_index]);
+				//if (cum_rep_weight + rep_weights[new_index] > 0) { // Prevent division by zero. If all weights are zero, center of mass is irrelevant anyways.
+				//	for (unsigned int d = 0; d < _emb_dimension; d++)
+				//		_center_of_mass[d] = (_center_of_mass[d] * cum_rep_weight + rep_weights[new_index] * point[d]) / (cum_rep_weight + rep_weights[new_index]);
+				//}
 
 				// Update cumulative weight
 				cum_rep_weight += rep_weights[new_index];

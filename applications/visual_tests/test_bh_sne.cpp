@@ -178,28 +178,28 @@ int main(int argc, char *argv[]){
 		weighted_tsne* wt = new weighted_tsne();
 
 		// Set tSNE parameters
-		int N = 10000;
+		int N = 1000;
 		int N_selected = 994;
 		int input_dims = 784;
 		int output_dims = 2;
 		int iterations = 1000;
 
-		wt->tSNE.setTheta(0.5); // Barnes-hut
-		//wt->tSNE.setTheta(0); // Exact
+		//wt->tSNE.setTheta(0.5); // Barnes-hut
+		wt->tSNE.setTheta(0); // Exact
 
 		wt->tSNE_param._mom_switching_iter = 250;
 		wt->tSNE_param._remove_exaggeration_iter = 250;
 		wt->tSNE_param._embedding_dimensionality = output_dims;
 
-		std::vector<float> perplexities(N, 40);
+		std::vector<float> perplexities(N, 20);
 		wt->prob_gen_param._perplexities = perplexities;
 
 		// Load the entire dataset
 		std::vector<weighted_tsne::scalar_type> data;
-		wt->read_bin(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-10k.bin", N, input_dims, data);
+		wt->read_bin(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-1k.bin", N, input_dims, data);
 
 		std::vector<weighted_tsne::scalar_type> labels;
-		wt->read_bin(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-10k-labels.bin", N, 1, labels);
+		wt->read_bin(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-1k-labels.bin", N, 1, labels);
 
 
 		float iteration_time = 0;
@@ -207,28 +207,32 @@ int main(int argc, char *argv[]){
 		wt->initialise_tsne(data, N, input_dims);
 
 		// Load selected points
-		std::vector<weighted_tsne::scalar_type> selectedIndicesFloat;
-		wt->read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/labels-9-994.csv", N_selected, 1, selectedIndicesFloat);
-		std::vector<int> selectedIndices(selectedIndicesFloat.begin(), selectedIndicesFloat.end());
-		//std::vector<int> selectedIndices = { 4 };
+		//std::vector<weighted_tsne::scalar_type> selectedIndicesFloat;
+		//wt->read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/labels-9-994.csv", N_selected, 1, selectedIndicesFloat);
+		//std::vector<int> selectedIndices(selectedIndicesFloat.begin(), selectedIndicesFloat.end());
 
-		std::vector<weighted_tsne::scalar_type> selectionEmbeddingFinal;
-		wt->read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding-selection.csv", N_selected, output_dims, selectionEmbeddingFinal);
-		std::vector<weighted_tsne::scalar_type> selectionEmbeddingStart(selectionEmbeddingFinal.size());
-		std::vector<weighted_tsne::scalar_type> selectionEmbeddingCurrent(selectionEmbeddingFinal.size());
+		//std::vector<weighted_tsne::scalar_type> selectionEmbeddingFinal;
+		//wt->read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding-selection.csv", N_selected, output_dims, selectionEmbeddingFinal);
+		//std::vector<weighted_tsne::scalar_type> selectionEmbeddingStart(selectionEmbeddingFinal.size());
+		//std::vector<weighted_tsne::scalar_type> selectionEmbeddingCurrent(selectionEmbeddingFinal.size());
 
-		for (int i = 0; i < selectionEmbeddingStart.size(); i++) {
-			selectionEmbeddingStart[i] = 0.0001f * selectionEmbeddingFinal[i];
-			selectionEmbeddingFinal[i] = 0.2f * selectionEmbeddingFinal[i];
+		//for (int i = 0; i < selectionEmbeddingStart.size(); i++) {
+		//	selectionEmbeddingStart[i] = 0.2f * selectionEmbeddingFinal[i];
+		//	selectionEmbeddingFinal[i] = 0.2f * selectionEmbeddingFinal[i];
 
-			//if (i % 1 == 0) {
-			//	selectionEmbeddingStart[i] += 1.0;
-			//}
-		}
+		//	//if (i % 1 == 0) {
+		//	//	selectionEmbeddingStart[i] += 1.0;
+		//	//}
+		//}
 
-		wt->set_coordinates(selectedIndices, selectionEmbeddingStart);
-		//wt->set_coordinates(selectedIndices, std::vector<float>{ 0,0 });
-		wt->set_locked_points(selectedIndices);
+		std::vector<int> selectedIndices = { 4 };
+		//std::vector<weighted_tsne::scalar_type> selectionEmbeddingStart = { 0, 0 };
+		//std::vector<weighted_tsne::scalar_type> selectionEmbeddingEnd = { 0, 0 };
+
+
+		//wt->set_coordinates(selectedIndices, selectionEmbeddingStart);
+		////wt->set_coordinates(selectedIndices, std::vector<float>{ 0,0 });
+		//wt->set_locked_points(selectedIndices);
 
 
 		// Add nearest neighbours to selection
@@ -246,8 +250,9 @@ int main(int argc, char *argv[]){
 
 		// Set weights
 		std::vector<float> one_weights(N, 1);
+		std::vector<float> zero_weights(N, 0);
 		std::vector<float> high_weights(N, 2);
-		std::vector<float> selected_high(N, 0.1);
+		std::vector<float> selected_high(N, 0);
 		//std::vector<float> selected_high_extended(N, 0);
 		std::vector<float> lerp_weights(N, 1);
 
@@ -266,7 +271,7 @@ int main(int argc, char *argv[]){
 		//	weights_falloff[i] = 2 * weights_falloff[i];
 		//}
 
-		wt->tSNE.setWeights(one_weights, one_weights, one_weights, one_weights);
+		wt->tSNE.setWeights(selected_high, selected_high, one_weights, one_weights);
 
 /*
         hdi::dr::HDJointProbabilityGenerator<scalar_type>::sparse_scalar_matrix_type probability;
@@ -344,21 +349,21 @@ int main(int argc, char *argv[]){
 			wt->do_iteration();
 
 			// Selection growing
-			float alpha = (iter - 350) / 300.0;
+			float alpha = (iter - 250) / 300.0;
 			alpha = alpha > 1.0 ? 1.0 : (alpha < 0.0 ? 0.0 : alpha);
 
 			// Set point location at every iteration < 800
-			if (iter < 800) {
+		/*	if (iter < 800) {
 				wt->lerp(selectionEmbeddingStart, selectionEmbeddingFinal, selectionEmbeddingCurrent, alpha);
 				wt->set_coordinates(selectedIndices, selectionEmbeddingCurrent);
-			}
+			}*/
 		/*	else if (iter == 800) {
 				wt->set_locked_points(std::vector<int>{});
 			}*/
 
 			// Lerp the weights
-			wt->lerp(one_weights, selected_high, lerp_weights, alpha);
-			wt->tSNE.setWeights(lerp_weights, lerp_weights, one_weights, one_weights);
+			//wt->lerp(one_weights, selected_high, lerp_weights, alpha);
+			//wt->tSNE.setWeights(lerp_weights, lerp_weights, one_weights, one_weights);
 
             {//limits
                 std::vector<scalar_type> limits;
