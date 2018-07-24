@@ -212,7 +212,7 @@ namespace hdi{
                 ind1 = j * _emb_dimension;
 
 				// Loop over all non-zero connections from data point j
-                for(auto elem: sparse_matrix[j]) { // j is the index of i, elem.first is the index of j, elem.second is the value p_ij
+                for(auto elem: sparse_matrix[j]) { // j is the index of i, elem.first is the index of j, elem.second/n is the value p_ij
                     // Compute pairwise distance and Q-value
                     D = 1.0; // q_ij = 1 + ||Yi - Yj||^2
 					
@@ -225,9 +225,9 @@ namespace hdi{
 					for(unsigned int d = 0; d < _emb_dimension; d++)
                         D += buff[d] * buff[d];
 
-                    hp_scalar_type p_ij = elem.second;
-                    //hp_scalar_type res = hp_scalar_type(p_ij) * exaggeration / D / n; // Why n??
-					hp_scalar_type res = hp_scalar_type(p_ij) * exaggeration / D / n; // p_ij / (1 + ||y_i - y_j||^2) - Why diving by n?
+                    hp_scalar_type p_ij = elem.second / n;
+                    //hp_scalar_type res = hp_scalar_type(p_ij) * exaggeration / D
+					hp_scalar_type res = hp_scalar_type(p_ij) * exaggeration / D; // p_ij / (1 + ||y_i - y_j||^2)
 
 					// Fetch the weight value for this connection (average weight)
 					//float weight = 0.5f * (attr_weights[j] + attr_weights[elem.first]);

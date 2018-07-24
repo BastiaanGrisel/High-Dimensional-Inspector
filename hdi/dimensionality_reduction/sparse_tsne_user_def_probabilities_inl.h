@@ -356,12 +356,14 @@ namespace hdi{
 						_gradient[i * dim + d] += static_cast<scalar_type>(-4*negative);
 					}
 				}
-				for(auto& elem: _P[i]){
+
+				for(auto& elem: _P[i]){					
 					for(int d = 0; d < dim; ++d){
 						const int j = elem.first;
 						const int idx = i*n + j;
                         const double distance((*_embedding_container)[i * dim + d] - (*_embedding_container)[j * dim + d]);
-						double p_ij = elem.second/n;
+						double p_ij = elem.second / n;
+						//double p_ij = sum_weights > 0 ? elem.second / sum_weights : 0;
 						//const double weight = 0.5 * (_attr_weights_avg[i] + _attr_weights_avg[j]);
 						//const double weight = std::max(_attr_weights_avg[i], _attr_weights_avg[j]);
 						const double weight = _attr_weights_avg[j];
@@ -433,12 +435,12 @@ namespace hdi{
                 (*_embedding_container)[i] += static_cast<scalar_type>(_previous_gradient[i] * mult);
 			}
 
-            ////MAGIC NUMBER
-            //if(exaggerationFactor() > 1.2){
-            //    _embedding->scaleIfSmallerThan(0.1);
-            //}else{
-            //    _embedding->zeroCentered();
-            //}
+            //MAGIC NUMBER
+            if(exaggerationFactor() > 1.2){
+                _embedding->scaleIfSmallerThan(0.1);
+            }else{
+                _embedding->zeroCentered();
+            }
 
 			++_iteration;
 		}

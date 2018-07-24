@@ -179,7 +179,6 @@ int main(int argc, char *argv[]){
 
 		// Set tSNE parameters
 		int N = 10000;
-		int N_selected = 994;
 		int input_dims = 784;
 		int output_dims = 2;
 		int iterations = 1000;
@@ -207,8 +206,14 @@ int main(int argc, char *argv[]){
 
 		// Load selected points
 		std::vector<weighted_tsne::scalar_type> selectedIndicesFloat;
-		wt->read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/labels-9-994.csv", N_selected, 1, selectedIndicesFloat);
-		std::vector<int> selectedIndices(selectedIndicesFloat.begin(), selectedIndicesFloat.end());
+
+		//int N_selected = 994;
+		//wt->read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/labels-9-994.csv", N_selected, 1, selectedIndicesFloat);
+
+		//int N_selected = 839;
+		//wt->read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/mnist-10k-selection-358-839.csv", N_selected, 1, selectedIndicesFloat);
+
+		//std::vector<int> selectedIndices(selectedIndicesFloat.begin(), selectedIndicesFloat.end());
 
 		//std::vector<weighted_tsne::scalar_type> selectionEmbeddingFinal;
 		//wt->read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding-selection.csv", N_selected, output_dims, selectionEmbeddingFinal);
@@ -216,7 +221,7 @@ int main(int argc, char *argv[]){
 		//std::vector<weighted_tsne::scalar_type> selectionEmbeddingCurrent(selectionEmbeddingFinal.size());
 
 		//for (int i = 0; i < selectionEmbeddingStart.size(); i++) {
-		//	selectionEmbeddingStart[i] = 0.2f * selectionEmbeddingFinal[i];
+		//	selectionEmbeddingStart[i] = 0.0001f * selectionEmbeddingFinal[i];
 		//	selectionEmbeddingFinal[i] = 0.2f * selectionEmbeddingFinal[i];
 
 		//	//if (i % 1 == 0) {
@@ -224,12 +229,12 @@ int main(int argc, char *argv[]){
 		//	//}
 		//}
 
-		//std::vector<int> selectedIndices = { 4 };
+		std::vector<int> selectedIndices = { 4 };
 		//std::vector<weighted_tsne::scalar_type> selectionEmbeddingStart = { 0, 0 };
 		//std::vector<weighted_tsne::scalar_type> selectionEmbeddingEnd = { 0, 0 };
 
 
-		//wt->set_coordinates(selectedIndices, selectionEmbeddingStart);
+		//wt->set_coordinates(selectedIndices, selectionEmbeddingFinal);
 		////wt->set_coordinates(selectedIndices, std::vector<float>{ 0,0 });
 		//wt->set_locked_points(selectedIndices);
 
@@ -251,14 +256,14 @@ int main(int argc, char *argv[]){
 		std::vector<float> one_weights(N, 1);
 		std::vector<float> zero_weights(N, 0);
 		std::vector<float> high_weights(N, 2);
-		std::vector<float> selected_high(N, 0.1);
+		std::vector<float> selected_high(N, 0);
 		std::vector<float> selected_higher(N, 0);
 		//std::vector<float> selected_high_extended(N, 0);
 		std::vector<float> lerp_weights(N, 1);
 
 		for (int index : selectedIndices) {
-			selected_high[index] = 10;
-			selected_higher[index] = 1;
+			selected_high[index] = 1;
+			selected_higher[index] = 1000;
 		}
 
 	/*	for (int index : selectedIndicesWithNeighbours) {
@@ -266,11 +271,11 @@ int main(int argc, char *argv[]){
 		}
 */
 		// Weight falloff
-		//std::vector<float> weights_falloff;
-		//wt->compute_weight_falloff(data, N, input_dims, selectedIndices, 100, weights_falloff);
-		//for (int i = 0; i < weights_falloff.size(); i++) {
-		//	weights_falloff[i] = 2 * weights_falloff[i];
-		//}
+		std::vector<float> weights_falloff;
+		wt->compute_weight_falloff(data, N, input_dims, selectedIndices, 1000, weights_falloff);
+		for (int i = 0; i < weights_falloff.size(); i++) {
+			weights_falloff[i] = weights_falloff[i];
+		}
 
 		wt->tSNE.setWeights(selected_high, selected_high, one_weights, one_weights);
 
@@ -354,10 +359,9 @@ int main(int argc, char *argv[]){
 			alpha = alpha > 1.0 ? 1.0 : (alpha < 0.0 ? 0.0 : alpha);
 
 			// Set point location at every iteration < 800
-		/*	if (iter < 800) {
-				wt->lerp(selectionEmbeddingStart, selectionEmbeddingFinal, selectionEmbeddingCurrent, alpha);
-				wt->set_coordinates(selectedIndices, selectionEmbeddingCurrent);
-			}*/
+			//wt->lerp(selectionEmbeddingStart, selectionEmbeddingFinal, selectionEmbeddingCurrent, alpha);
+			//wt->set_coordinates(selectedIndices, selectionEmbeddingCurrent);
+
 		/*	else if (iter == 800) {
 				wt->set_locked_points(std::vector<int>{});
 			}*/
