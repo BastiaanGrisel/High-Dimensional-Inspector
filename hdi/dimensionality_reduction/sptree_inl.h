@@ -269,21 +269,21 @@ namespace hdi{
 				cum_size++;
 
 				// Update the center of mass (weighted average)
-				// y_cell = (y_cell * w_cell + w_i * y_i) / (w_cell + w_i)
-				//if (cum_rep_weight + rep_weights[new_index] > 0) { // Prevent division by zero. If all weights are zero, center of mass is irrelevant anyways.
-				//	for (unsigned int d = 0; d < _emb_dimension; d++)
-				//		_center_of_mass[d] = (_center_of_mass[d] * cum_rep_weight + rep_weights[new_index] * point[d]) / (cum_rep_weight + rep_weights[new_index]);
-				//}
+				 //y_cell = (y_cell * w_cell + w_i * y_i) / (w_cell + w_i)
+				if (cum_rep_weight + rep_weights[new_index] > 0) { // Prevent division by zero. If all weights are zero, center of mass is irrelevant anyways.
+					for (unsigned int d = 0; d < _emb_dimension; d++)
+						_center_of_mass[d] = (_center_of_mass[d] * cum_rep_weight + rep_weights[new_index] * point[d]) / (cum_rep_weight + rep_weights[new_index]);
+				}
 
 				// Update cumulative weight
 				cum_rep_weight += rep_weights[new_index];
 	
 				// Update center of mass (non-weighted average)
-				hp_scalar_type mult1 = (hp_scalar_type)(cum_size - 1) / (hp_scalar_type)cum_size;
+	/*			hp_scalar_type mult1 = (hp_scalar_type)(cum_size - 1) / (hp_scalar_type)cum_size;
 				hp_scalar_type mult2 = 1.0 / (hp_scalar_type)cum_size;
 				for (unsigned int d = 0; d < _emb_dimension; d++) _center_of_mass[d] *= mult1;
 				for (unsigned int d = 0; d < _emb_dimension; d++) _center_of_mass[d] += mult2 * point[d];
-
+*/
 				// Update the cumulative weight of this cell
 				//cum_rep_weight = mult1 * cum_rep_weight + mult2 * point_weights[new_index];
 				//cum_rep_weight += point_weights[new_index];

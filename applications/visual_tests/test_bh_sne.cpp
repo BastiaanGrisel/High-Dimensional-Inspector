@@ -206,9 +206,9 @@ int main(int argc, char *argv[]){
 		wt->initialise_tsne(data, N, input_dims);
 
 		// Load selected points
-		//std::vector<weighted_tsne::scalar_type> selectedIndicesFloat;
-		//wt->read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/labels-9-994.csv", N_selected, 1, selectedIndicesFloat);
-		//std::vector<int> selectedIndices(selectedIndicesFloat.begin(), selectedIndicesFloat.end());
+		std::vector<weighted_tsne::scalar_type> selectedIndicesFloat;
+		wt->read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/labels-9-994.csv", N_selected, 1, selectedIndicesFloat);
+		std::vector<int> selectedIndices(selectedIndicesFloat.begin(), selectedIndicesFloat.end());
 
 		//std::vector<weighted_tsne::scalar_type> selectionEmbeddingFinal;
 		//wt->read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding-selection.csv", N_selected, output_dims, selectionEmbeddingFinal);
@@ -224,7 +224,7 @@ int main(int argc, char *argv[]){
 		//	//}
 		//}
 
-		std::vector<int> selectedIndices = { 4 };
+		//std::vector<int> selectedIndices = { 4 };
 		//std::vector<weighted_tsne::scalar_type> selectionEmbeddingStart = { 0, 0 };
 		//std::vector<weighted_tsne::scalar_type> selectionEmbeddingEnd = { 0, 0 };
 
@@ -251,12 +251,14 @@ int main(int argc, char *argv[]){
 		std::vector<float> one_weights(N, 1);
 		std::vector<float> zero_weights(N, 0);
 		std::vector<float> high_weights(N, 2);
-		std::vector<float> selected_high(N, 0);
+		std::vector<float> selected_high(N, 0.1);
+		std::vector<float> selected_higher(N, 0);
 		//std::vector<float> selected_high_extended(N, 0);
 		std::vector<float> lerp_weights(N, 1);
 
 		for (int index : selectedIndices) {
-			selected_high[index] = 1;
+			selected_high[index] = 10;
+			selected_higher[index] = 1;
 		}
 
 	/*	for (int index : selectedIndicesWithNeighbours) {
@@ -270,7 +272,7 @@ int main(int argc, char *argv[]){
 		//	weights_falloff[i] = 2 * weights_falloff[i];
 		//}
 
-		wt->tSNE.setWeights(one_weights, one_weights, one_weights, one_weights);
+		wt->tSNE.setWeights(selected_high, selected_high, one_weights, one_weights);
 
 /*
         hdi::dr::HDJointProbabilityGenerator<scalar_type>::sparse_scalar_matrix_type probability;
