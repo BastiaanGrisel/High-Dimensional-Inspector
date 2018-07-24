@@ -126,6 +126,7 @@ namespace hdi{
 			hp_scalar_type cum_rep_weight;
 			//scalar_type* attr_weights; // Reference to weights of the data points
 			scalar_type* rep_weights; // Reference to weights of the data points
+			scalar_type sum_all_rep_weights; // Sum of all the point weights (used for normalisation)
 
             // Axis-aligned bounding box stored as a center with half-_emb_dimensions to represent the boundaries of this quad tree
             Cell* boundary;
@@ -184,6 +185,9 @@ namespace hdi{
         void SPTree<scalar_type>::computeEdgeForces(const sparse_scalar_matrix& sparse_matrix, hp_scalar_type exaggeration, hp_scalar_type* pos_f, scalar_type* attr_weights)const{
 			const int n = sparse_matrix.size(); // n is the total number of data points
 
+			//float sum_weights = 0;
+			//for (int i = 0; i < n; i++) sum_weights += attr_weights[i];
+
             // Loop over all edges in the graph
 #ifdef __APPLE__
             //std::cout << "GCD dispatch, sptree 180.\n";
@@ -226,7 +230,8 @@ namespace hdi{
 					hp_scalar_type res = hp_scalar_type(p_ij) * exaggeration / D / n; // p_ij / (1 + ||y_i - y_j||^2) - Why diving by n?
 
 					// Fetch the weight value for this connection (average weight)
-					float weight = 0.5f * (attr_weights[j] + attr_weights[elem.first]);
+					//float weight = 0.5f * (attr_weights[j] + attr_weights[elem.first]);
+					float weight = attr_weights[elem.first];// / (sum_weights - attr_weights[j]);
 
                     // Add the positive force to the existing force for every dimension in the embedding
                     for(unsigned int d = 0; d < _emb_dimension; d++)

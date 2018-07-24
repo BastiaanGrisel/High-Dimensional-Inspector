@@ -189,7 +189,7 @@ namespace hdi{
             const int n = distribution.size();
 
 			float max_perplexity = *std::max_element(params._perplexities.begin(), params._perplexities.end());
-			const unsigned int nn = n - 1;// max_perplexity * params._perplexity_multiplier + 1;
+			const unsigned int nn = max_perplexity * params._perplexity_multiplier + 1;
 
             __block scalar_vector_type temp_vector(distances_squared.size(),0);
             
@@ -230,11 +230,11 @@ namespace hdi{
 
 			float max_perplexity = *std::max_element(params._perplexities.begin(), params._perplexities.end());
 
-       /*     const unsigned int nn = max_perplexity*params._perplexity_multiplier + 1;
-            const int n = indices.size()/nn;*/
+			const unsigned int nn = max_perplexity*params._perplexity_multiplier + 1;
+            const int n = indices.size()/nn;
             
-			const unsigned int nn = params._perplexities.size() - 1;
-			const int n = params._perplexities.size();
+	/*		const unsigned int nn = params._perplexities.size() - 1;
+			const int n = params._perplexities.size();*/
 
 #ifdef __APPLE__
             std::cout << "GCD dispatch, hd_joint_probability_generator 232.\n";

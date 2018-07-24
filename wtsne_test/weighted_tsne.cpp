@@ -12,6 +12,10 @@ int weighted_tsne::initialise_tsne(std::vector<scalar_type> in_data, int num_dat
 
 		hdi::utils::CoutLog log;
 		hdi::dr::HDJointProbabilityGenerator<scalar_type>::sparse_scalar_matrix_type distributions;
+		std::vector<scalar_type> probabilities;
+		std::vector<int> indices;
+
+		//prob_gen_param._perplexity_multiplier = 20;
 
 		{
 			hdi::utils::ScopedTimer<float, hdi::utils::Seconds> timer(similarities_comp_time);

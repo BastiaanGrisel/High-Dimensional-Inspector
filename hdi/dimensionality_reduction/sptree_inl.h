@@ -151,6 +151,8 @@ namespace hdi{
 
 			// Set weights
 			rep_weights = weights;
+			sum_all_rep_weights = 0;
+			for (int i = 0; i < N; i++) sum_all_rep_weights += weights[i];
 
             // Construct SPTree
             hp_scalar_type* width = (hp_scalar_type*) malloc(D * sizeof(hp_scalar_type));
@@ -208,6 +210,7 @@ namespace hdi{
 
 			if (inp_parent != NULL) {
 				rep_weights = inp_parent->rep_weights;
+				sum_all_rep_weights = inp_parent->sum_all_rep_weights;
 			}
 
             boundary = new Cell(_emb_dimension);
@@ -452,7 +455,8 @@ namespace hdi{
 				//	neg_f[d] += weight * mult * distance[d];
 
 				// Calculate weight: W_i,cell = (sum_j w_j + N_cell * w_i) / 2
-				float weight = (cum_rep_weight + cum_size * rep_weights[point_index]) / 2.0;
+				//float weight = (cum_rep_weight + cum_size * rep_weights[point_index]) / 2.0;
+				float weight = cum_rep_weight;// / (sum_all_rep_weights - rep_weights[point_index]);
 
 				// Compute and add t-SNE force between point and current cell
 				float D = 1.0 / (1.0 + sq_distance);

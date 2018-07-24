@@ -348,8 +348,11 @@ namespace hdi{
 				for(int j = 0; j < n; ++j){
 					for(int d = 0; d < dim; ++d){
 						const int idx = i*n + j;
+						//const double weight = 0.5 * (_rep_weights_avg[i] + _rep_weights_avg[j]);
+						//const double weight = std::max(_rep_weights_avg[i], _rep_weights_avg[j]);
+						const double weight = _rep_weights_avg[j];
                         const double distance((*_embedding_container)[i * dim + d] - (*_embedding_container)[j * dim + d]);
-						const double negative(0.5 * (_rep_weights_avg[i] + _rep_weights_avg[j]) * _Q[idx] * _Q[idx] / _normalization_Q * distance);
+						const double negative(weight * _Q[idx] * _Q[idx] / _normalization_Q * distance);
 						_gradient[i * dim + d] += static_cast<scalar_type>(-4*negative);
 					}
 				}
@@ -359,8 +362,10 @@ namespace hdi{
 						const int idx = i*n + j;
                         const double distance((*_embedding_container)[i * dim + d] - (*_embedding_container)[j * dim + d]);
 						double p_ij = elem.second/n;
-						
-						const double positive(0.5 * (_attr_weights_avg[i] + _attr_weights_avg[j]) * p_ij * _Q[idx] * distance);
+						//const double weight = 0.5 * (_attr_weights_avg[i] + _attr_weights_avg[j]);
+						//const double weight = std::max(_attr_weights_avg[i], _attr_weights_avg[j]);
+						const double weight = _attr_weights_avg[j];
+						const double positive(weight * p_ij * _Q[idx] * distance);
 						_gradient[i * dim + d] += static_cast<scalar_type>(4*exaggeration*positive);
 					}
 				}
