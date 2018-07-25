@@ -126,6 +126,8 @@ namespace hdi{
 			void computeLowDimensionalDistribution();
 			scalar_type _normalization_Q; //! Normalization factor of Q - Z in the original paper
 
+			sparse_scalar_matrix_type connection_weights;
+
 		private:
 			//! Compute High-dimensional distribution
             void computeHighDimensionalDistribution(const sparse_scalar_matrix_type& probabilities);
@@ -145,7 +147,7 @@ namespace hdi{
             //! Compute the exaggeration factor based on the current iteration
             scalar_type exaggerationFactor();
 
-		
+			
 
 		private:
             data::Embedding<scalar_type>* _embedding; //! embedding

@@ -1,6 +1,6 @@
 #include "weighted_tsne.h"
 
-int weighted_tsne::initialise_tsne(std::vector<scalar_type> in_data, int num_data_points, int num_dimensions)
+int weighted_tsne::initialise_tsne(std::vector<scalar_type> in_data, int num_dps, int num_dimensions)
 {
 	try {
 		//Input
@@ -9,6 +9,9 @@ int weighted_tsne::initialise_tsne(std::vector<scalar_type> in_data, int num_dat
 		//std::copy(data.begin(), data.begin() + (num_data_points * num_dimensions), in_data.begin());
 
 		float similarities_comp_time = 0;
+
+		num_data_points = num_dps;
+		input_dimensions = num_dimensions;
 
 		hdi::utils::CoutLog log;
 		hdi::dr::HDJointProbabilityGenerator<scalar_type>::sparse_scalar_matrix_type distributions;
@@ -19,7 +22,7 @@ int weighted_tsne::initialise_tsne(std::vector<scalar_type> in_data, int num_dat
 
 		{
 			hdi::utils::ScopedTimer<float, hdi::utils::Seconds> timer(similarities_comp_time);
-			prob_gen.computeProbabilityDistributions(data.data(), num_dimensions, num_data_points, distributions, prob_gen_param);
+			prob_gen.computeProbabilityDistributions(data.data(), input_dimensions, num_data_points, distributions, prob_gen_param);
 		}
 
 		{
@@ -35,30 +38,30 @@ int weighted_tsne::initialise_tsne(std::vector<scalar_type> in_data, int num_dat
 	return 1;
 }
 
-int weighted_tsne::initialise_tsne(std::wstring data_path, int num_data_points, int num_dimensions)
+int weighted_tsne::initialise_tsne(std::wstring data_path, int num_dps, int num_dimensions)
 {
 	try {
 		float data_loading_time = 0;
 
 		//Input
-		data.resize(num_data_points * num_dimensions);
+		data.resize(num_dps * num_dps);
 
 		{
 			hdi::utils::ScopedTimer<float, hdi::utils::Seconds> timer(data_loading_time);
 			std::ifstream input_file(data_path, std::ios::in | std::ios::binary | std::ios::ate);
-			if (int(input_file.tellg()) != int(sizeof(scalar_type) * num_dimensions * num_data_points)) {
+			if (int(input_file.tellg()) != int(sizeof(scalar_type) * num_dimensions * num_dps)) {
 				std::cout << "Input file size doesn't agree with input parameters!" << std::endl;
 				return 1;
 			}
 			input_file.seekg(0, std::ios::beg);
-			input_file.read(reinterpret_cast<char*>(data.data()), sizeof(scalar_type) * num_dimensions * num_data_points);
+			input_file.read(reinterpret_cast<char*>(data.data()), sizeof(scalar_type) * num_dimensions * num_dps);
 			input_file.close();
 		}
 
 		hdi::utils::CoutLog log;
 		hdi::utils::secureLogValue(&log, "Data loading (sec)", data_loading_time);
 
-		initialise_tsne(data, num_data_points, num_dimensions);
+		initialise_tsne(data, num_dps, num_dimensions);
 
 		hdi::utils::secureLogValue(&log, "Data loading (sec)", data_loading_time);
 
@@ -98,6 +101,7 @@ float weighted_tsne::jaccard_similarity(std::vector<int> A, std::vector<int> B) 
 	return sizeIntersection / (sizeA + sizeB - sizeIntersection);
 }
 
+// Higher is better
 void weighted_tsne::calculate_percentage_error(std::vector<int> &NN1, std::vector<int> &NN2, std::vector<scalar_type> &errors, int N, int d, int k) {
 	assert(k <= d);
 	errors.resize(N, 0);
@@ -114,6 +118,40 @@ void weighted_tsne::calculate_percentage_error(std::vector<int> &NN1, std::vecto
 		std::vector<int> NN2_i(NN2.begin() + start_index, NN2.begin() + end_index);
 
 		errors[i] = (intersection(NN1_i, NN2_i).size() / (float) k);
+	}
+}
+
+void weighted_tsne::calculate_kl_divergence(std::vector<scalar_type> &errors) {
+
+	// Get P distribution
+	sparse_scalar_matrix P = tSNE.getDistributionP();
+
+	// Calculate Q distribution
+	tSNE.computeLowDimensionalDistribution();
+	//float normQ = tSNE._normalization_Q;
+	std::vector<scalar_type> Q = tSNE.getDistributionQ();
+
+	// For each data point, calculate the KL-divergence
+	errors.resize(num_data_points, 0);
+
+	for (int i = 0; i < num_data_points; i++) {
+		// Calculate normalisation terms
+		double normP = 0;
+		for (auto &elem : P[i]) {
+			normP += elem.second;
+		}
+
+		double normQ = 0;
+		for (int j = 0; j < num_data_points; j++) {
+			normQ += Q[i * num_data_points + j];
+		}
+
+		// Calculate KL-div
+		for (auto &elem : P[i]) {
+			double pij = elem.second / normP; // idk maybe divide by N?
+			double qij = Q[i * num_data_points + elem.first] / normQ; // From data point i to data point elem.first
+			errors[i] += pij * std::log(pij / qij);
+		}
 	}
 }
 
@@ -321,6 +359,29 @@ int weighted_tsne::read_csv(std::wstring file_path, int N, int d, std::vector<we
 
 	return 0;
 }
+
+void weighted_tsne::write_csv(std::vector<float> data, int N, int output_dims, std::string filename) {
+
+	std::ofstream out_file2(filename);
+
+	for (int i = 0; i < N; i++) {
+		std::string line = "";
+
+		for (int d = 0; d < output_dims; d++) {
+			int index = i * output_dims + d;
+			line += std::to_string(data[index]);
+
+			if (d < (output_dims - 1)) {
+				line += ",";
+			}
+		}
+
+		out_file2 << line << std::endl;
+	}
+
+	out_file2.close();
+}
+
 
 void weighted_tsne::lerp(std::vector<float> from, std::vector<float> to, std::vector<float> &res, float alpha) {
 	res.resize(from.size());

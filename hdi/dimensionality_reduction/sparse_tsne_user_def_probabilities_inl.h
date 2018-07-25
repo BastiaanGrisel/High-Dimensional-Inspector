@@ -143,6 +143,8 @@ namespace hdi{
 				_rep_weights_avg.resize(size, 1);
 				_rep_weights_all.resize(size, 1);
 
+				connection_weights.resize(size);
+
 				_locked_points.resize(size, false);
 			}
 			
@@ -178,6 +180,8 @@ namespace hdi{
 				_attr_weights_all.resize(size, 1);
 				_rep_weights_avg.resize(size, 1);
 				_rep_weights_all.resize(size, 1);
+
+				connection_weights.resize(size);
 
 				_locked_points.resize(size, false);
             }
@@ -350,7 +354,13 @@ namespace hdi{
 						const int idx = i*n + j;
 						//const double weight = 0.5 * (_rep_weights_avg[i] + _rep_weights_avg[j]);
 						//const double weight = std::max(_rep_weights_avg[i], _rep_weights_avg[j]);
-						const double weight = _rep_weights_avg[j];
+						//const double weight = _rep_weights_avg[j];
+						double weight = 0;
+
+						if (connection_weights[i].find(j) != connection_weights[i].end()) {
+							weight = connection_weights[i][j];
+						}
+						
                         const double distance((*_embedding_container)[i * dim + d] - (*_embedding_container)[j * dim + d]);
 						const double negative(weight * _Q[idx] * _Q[idx] / _normalization_Q * distance);
 						_gradient[i * dim + d] += static_cast<scalar_type>(-4*negative);
@@ -366,7 +376,13 @@ namespace hdi{
 						//double p_ij = sum_weights > 0 ? elem.second / sum_weights : 0;
 						//const double weight = 0.5 * (_attr_weights_avg[i] + _attr_weights_avg[j]);
 						//const double weight = std::max(_attr_weights_avg[i], _attr_weights_avg[j]);
-						const double weight = _attr_weights_avg[j];
+						//const double weight = _attr_weights_avg[j];
+						double weight = 0;
+
+						if (connection_weights[i].find(j) != connection_weights[i].end()) {
+							weight = connection_weights[i][j];
+						}
+
 						const double positive(weight * p_ij * _Q[idx] * distance);
 						_gradient[i * dim + d] += static_cast<scalar_type>(4*exaggeration*positive);
 					}
