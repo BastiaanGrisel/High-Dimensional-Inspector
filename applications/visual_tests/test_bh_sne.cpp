@@ -284,7 +284,7 @@ int main(int argc, char *argv[]){
 
 		for (int index : selectedIndices) {
 			for (int i = 0; i < N; i++) {
-				s[index][i] = 1;
+				//s[index][i] = 1;
 				s[i][index] = 1;
 			}
 		}
@@ -388,10 +388,6 @@ int main(int argc, char *argv[]){
 			//wt->lerp(selectionEmbeddingStart, selectionEmbeddingFinal, selectionEmbeddingCurrent, alpha);
 			//wt->set_coordinates(selectedIndices, selectionEmbeddingCurrent);
 
-		/*	else if (iter == 800) {
-				wt->set_locked_points(std::vector<int>{});
-			}*/
-
 			// Lerp the weights
 			//wt->lerp(one_weights, selected_high, lerp_weights, alpha);
 			//wt->tSNE.setWeights(lerp_weights, lerp_weights, one_weights, one_weights);
@@ -418,12 +414,20 @@ int main(int argc, char *argv[]){
                 auto bl = QVector2D(limits[0],limits[2]);
                 viewer.setTopRightCoordinates(tr);
                 viewer.setBottomLeftCoordinates(bl);
+
+				if ((iter % 100) == 0) {
+					hdi::utils::secureLogValue(&log, "width", limits[3] - limits[2]);
+					hdi::utils::secureLogValue(&log, "height", limits[1] - limits[0]);
+				}
             }
+
 
             if((iter%1) == 0){
                 viewer.updateGL();
-                hdi::utils::secureLogValue(&log,"Iter",iter);
+				hdi::utils::secureLogValue(&log, "Iter", iter);
             }
+
+			
             QApplication::processEvents();
             ++iter;
         }
