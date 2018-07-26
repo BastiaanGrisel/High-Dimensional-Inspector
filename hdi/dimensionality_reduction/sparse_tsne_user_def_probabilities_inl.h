@@ -352,14 +352,19 @@ namespace hdi{
 				for(int j = 0; j < n; ++j){
 					for(int d = 0; d < dim; ++d){
 						const int idx = i*n + j;
-						//const double weight = 0.5 * (_rep_weights_avg[i] + _rep_weights_avg[j]);
 						//const double weight = std::max(_rep_weights_avg[i], _rep_weights_avg[j]);
-						//const double weight = _rep_weights_avg[j];
-						double weight = 0;
 
-						if (connection_weights[i].find(j) != connection_weights[i].end()) {
-							weight = connection_weights[i][j];
-						}
+						// Average weights
+						//const double weight = 0.5 * (_rep_weights_avg[i] + _rep_weights_avg[j]);
+
+						// Assymetric weights
+						const double weight = _rep_weights_avg[j];
+
+						// Connection weights
+						//double weight = 0;
+						//if (connection_weights[i].find(j) != connection_weights[i].end()) {
+						//	weight = connection_weights[i][j];
+						//}
 						
                         const double distance((*_embedding_container)[i * dim + d] - (*_embedding_container)[j * dim + d]);
 						const double negative(weight * _Q[idx] * _Q[idx] / _normalization_Q * distance);
@@ -374,14 +379,19 @@ namespace hdi{
                         const double distance((*_embedding_container)[i * dim + d] - (*_embedding_container)[j * dim + d]);
 						double p_ij = elem.second / n;
 						//double p_ij = sum_weights > 0 ? elem.second / sum_weights : 0;
-						//const double weight = 0.5 * (_attr_weights_avg[i] + _attr_weights_avg[j]);
 						//const double weight = std::max(_attr_weights_avg[i], _attr_weights_avg[j]);
-						//const double weight = _attr_weights_avg[j];
-						double weight = 0;
 
-						if (connection_weights[i].find(j) != connection_weights[i].end()) {
-							weight = connection_weights[i][j];
-						}
+						// Average weights
+						//const double weight = 0.5 * (_attr_weights_avg[i] + _attr_weights_avg[j]);
+
+						// Assymetric weights
+						const double weight = _attr_weights_avg[j];
+						
+						// Connection weights
+						//double weight = 0;
+						//if (connection_weights[i].find(j) != connection_weights[i].end()) {
+						//	weight = connection_weights[i][j];
+						//}
 
 						const double positive(weight * p_ij * _Q[idx] * distance);
 						_gradient[i * dim + d] += static_cast<scalar_type>(4*exaggeration*positive);
@@ -423,7 +433,7 @@ namespace hdi{
 				int point_index = i / 2;
 
 				//if (_locked_points[point_index] == false) {
-					_gradient[i] = (_attr_weights_all[point_index] * positive_forces[i] - _rep_weights_all[point_index] * (negative_forces[i] / sum_Q)); // F_attr - ((F_rep * Z) / Z)
+					_gradient[i] = ( 4* _attr_weights_all[point_index] * positive_forces[i] - 4*_rep_weights_all[point_index] * (negative_forces[i] / sum_Q)); // F_attr - ((F_rep * Z) / Z)
 	/*			}
 				else {
 					_gradient[i] = 0;

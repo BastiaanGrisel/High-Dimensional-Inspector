@@ -185,8 +185,8 @@ int main(int argc, char *argv[]){
 		int output_dims = 2;
 		int iterations = 1000;
 
-		//wt->tSNE.setTheta(0.5); // Barnes-hut
-		wt->tSNE.setTheta(0); // Exact
+		wt->tSNE.setTheta(0.001); // Barnes-hut
+		//wt->tSNE.setTheta(0); // Exact
 
 		wt->tSNE_param._mom_switching_iter = 250;
 		wt->tSNE_param._remove_exaggeration_iter = 250;
@@ -273,25 +273,25 @@ int main(int argc, char *argv[]){
 		}
 */
 		// Weight falloff
-		std::vector<float> weights_falloff;
-		wt->compute_weight_falloff(data, N, input_dims, selectedIndices, 1000, weights_falloff);
-		for (int i = 0; i < weights_falloff.size(); i++) {
-			weights_falloff[i] = weights_falloff[i];
-		}
+		//std::vector<float> weights_falloff;
+		//wt->compute_weight_falloff(data, N, input_dims, selectedIndices, 1000, weights_falloff);
+		//for (int i = 0; i < weights_falloff.size(); i++) {
+		//	weights_falloff[i] = weights_falloff[i];
+		//}
 
-		sparse_scalar_matrix s;
-		s.resize(N);
+		//sparse_scalar_matrix s;
+		//s.resize(N);
 
-		for (int index : selectedIndices) {
-			for (int i = 0; i < N; i++) {
-				//s[index][i] = 1;
-				s[i][index] = 1;
-			}
-		}
+		//for (int index : selectedIndices) {
+		//	for (int i = 0; i < N; i++) {
+		//		//s[index][i] = 1;
+		//		s[i][index] = 1;
+		//	}
+		//}
 
-		wt->tSNE.connection_weights = s;
+		//wt->tSNE.connection_weights = s;
 
-		//wt->tSNE.setWeights(selected_high, selected_high, one_weights, one_weights);
+		wt->tSNE.setWeights(selected_high, selected_high, one_weights, one_weights);
 
 /*
         hdi::dr::HDJointProbabilityGenerator<scalar_type>::sparse_scalar_matrix_type probability;
@@ -412,13 +412,16 @@ int main(int argc, char *argv[]){
                 wt->embedding.computeEmbeddingBBox(limits,0.25);
                 auto tr = QVector2D(limits[1],limits[3]);
                 auto bl = QVector2D(limits[0],limits[2]);
+		/*		float lim = 15;
+				auto tr = QVector2D(lim, lim);
+				auto bl = QVector2D(-lim, -lim);*/
                 viewer.setTopRightCoordinates(tr);
                 viewer.setBottomLeftCoordinates(bl);
 
-				if ((iter % 100) == 0) {
-					hdi::utils::secureLogValue(&log, "width", limits[3] - limits[2]);
-					hdi::utils::secureLogValue(&log, "height", limits[1] - limits[0]);
-				}
+				//if ((iter % 100) == 0) {
+				//	hdi::utils::secureLogValue(&log, "tr1", limits[1]);
+				//	hdi::utils::secureLogValue(&log, "tr2", limits[3]);
+				//}
             }
 
 

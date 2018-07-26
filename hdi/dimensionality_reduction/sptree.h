@@ -225,17 +225,17 @@ namespace hdi{
 					for(unsigned int d = 0; d < _emb_dimension; d++)
                         D += buff[d] * buff[d];
 
-                    hp_scalar_type p_ij = elem.second / n;
+                    hp_scalar_type p_ij = elem.second;
                     //hp_scalar_type res = hp_scalar_type(p_ij) * exaggeration / D
-					hp_scalar_type res = hp_scalar_type(p_ij) * exaggeration / D; // p_ij / (1 + ||y_i - y_j||^2)
+					hp_scalar_type res = hp_scalar_type(p_ij) * exaggeration / D / n; // p_ij / (1 + ||y_i - y_j||^2)
 
 					// Fetch the weight value for this connection (average weight)
-					//float weight = 0.5f * (attr_weights[j] + attr_weights[elem.first]);
-					float weight = attr_weights[elem.first];// / (sum_weights - attr_weights[j]);
+					//float weight = 0.5f * (attr_weights[j] + attr_weights[elem.first]); // Average weight
+					float weight = attr_weights[elem.first]; // Assymetric weight
 
                     // Add the positive force to the existing force for every dimension in the embedding
                     for(unsigned int d = 0; d < _emb_dimension; d++)
-                      pos_f[ind1 + d] += weight * res * buff[d]; // (p_ij * (y_i - y_j)) / (1 + ||y_i - y_j||^2)
+                      pos_f[ind1 + d] += weight * res * buff[d] * exaggeration; // (p_ij * (y_i - y_j)) / (1 + ||y_i - y_j||^2)
                 }
             }
 #ifdef __APPLE__

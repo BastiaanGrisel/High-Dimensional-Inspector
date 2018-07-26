@@ -222,7 +222,7 @@ namespace hdi{
 
             _center_of_mass = (hp_scalar_type*) malloc(D * sizeof(hp_scalar_type));
             for(unsigned int d = 0; d < D; d++) _center_of_mass[d] = .0;
-            //distance = (hp_scalar_type*) malloc(sq_distance * sizeof(hp_scalar_type));
+            //distance = (hp_scalar_type*) malloc(D * sizeof(hp_scalar_type));
         }
 
         // Destructor for SPTree
@@ -421,10 +421,10 @@ namespace hdi{
             if(cum_size == 0 || (is_leaf && size == 1 && index[0] == point_index)) return;
 
             // Compute squared distance between point and center-of-mass
-            hp_scalar_type sq_distance = .0;
+            hp_scalar_type D = .0;
             unsigned int ind = point_index * _emb_dimension;
             for(unsigned int d = 0; d < _emb_dimension; d++) distance[d] = _emb_positions[ind + d] - _center_of_mass[d];
-            for(unsigned int d = 0; d < _emb_dimension; d++) sq_distance += distance[d] * distance[d];
+            for(unsigned int d = 0; d < _emb_dimension; d++) D += distance[d] * distance[d];
 
             // Check whether we can use this node as a "summary"
             hp_scalar_type max_width = 0.0;
@@ -434,42 +434,21 @@ namespace hdi{
                 max_width = (max_width > cur_width) ? max_width : cur_width;
             }
 
-            if(is_leaf || max_width / sqrt(sq_distance) < theta) {  // If we use this cell as a summary (recursion stop-condition)
-				// Estimate for Z inside this tree: N_cell / (1 + ||y_i - y_cell||^2)
-				// Total formula: (N_cell * (y_i - y_cell)) / (1 + ||y_i - y_cell||^2)^2
+            if(is_leaf || max_width / sqrt(D) < theta) {  // If we use this cell as a summary (recursion stop-condition)
+				// Compute and add t-SNE force between point and current node
+				//float weight = (cum_rep_weight + cum_size * rep_weights[point_index]) / 2.0; // Average
+				float weight = cum_rep_weight;
 
-				//// Compute and add t-SNE force between point and current cell
-				//float D = 1.0 / (1.0 + sq_distance);
+				if (is_leaf && weight > 0) {
+					int x = 1;
+				}
 
-				//hp_scalar_type mult = cum_size * D;
+				D = 1.0 / (1.0 + D);
+				hp_scalar_type mult = cum_size * D;
+				sum_Q += mult;
 
-				//// sum_Q holds the estimate for Z (also based on Barnes-Hut)
-				//sum_Q += mult;
-
-				//mult *= D;
-				//
-				//// Calculate weight: W_i,cell = (sum_j w_j + N_cell * w_i) / (2 * N_cell)
-				//float weight = (cum_rep_weight + cum_size * rep_weights[point_index]) / (2 * cum_size);
-
-				//for (unsigned int d = 0; d < _emb_dimension; d++) 
-				//	neg_f[d] += weight * mult * distance[d];
-
-				// Calculate weight: W_i,cell = (sum_j w_j + N_cell * w_i) / 2
-				//float weight = (cum_rep_weight + cum_size * rep_weights[point_index]) / 2.0;
-				float weight = cum_rep_weight;// / (sum_all_rep_weights - rep_weights[point_index]);
-
-				// Compute and add t-SNE force between point and current cell
-				float D = 1.0 / (1.0 + sq_distance);
-
-				float Z_estimate = weight * D;
-
-				// sum_Q holds the estimate for Z (also based on Barnes-Hut)
-				sum_Q += Z_estimate;
-
-				float FrepZ_estimate = weight * D * D;
-
-				for (unsigned int d = 0; d < _emb_dimension; d++)
-					neg_f[d] += FrepZ_estimate * distance[d];
+				mult *= D;
+				for (unsigned int d = 0; d < _emb_dimension; d++) neg_f[d] += weight * mult * distance[d];
 
             } else {
 
@@ -487,7 +466,7 @@ namespace hdi{
             // Make sure that we spend no time on empty nodes or self-interactions
             if(cum_size == 0 || (is_leaf && size == 1 && index[0] == point_index)) return;
 
-            // Compute sq_distance between point and center-of-mass
+            // Compute D between point and center-of-mass
             hp_scalar_type D = .0;
             unsigned int ind = point_index * _emb_dimension;
             for(unsigned int d = 0; d < _emb_dimension; d++) buff[d] = _emb_positions[ind + d] - _center_of_mass[d];
@@ -534,7 +513,7 @@ namespace hdi{
                 hp_scalar_type D;
                 ind1 = n * _emb_dimension;
                 for(unsigned int i = row_P[n]; i < row_P[n + 1]; i++) {
-                    // Compute pairwise sq_distance and Q-value
+                    // Compute pairwise D and Q-value
                     D = 1.0;
                     ind2 = col_P[i] * _emb_dimension;
                     for(unsigned int d = 0; d < _emb_dimension; d++)
@@ -567,7 +546,7 @@ namespace hdi{
                 hp_scalar_type q_ij_1;
                 ind1 = n * _emb_dimension;
                 for(auto idx: sparse_matrix._symmetric_matrix[n]) {
-                    // Compute pairwise sq_distance and Q-value
+                    // Compute pairwise D and Q-value
                     q_ij_1 = 1.0;
                     ind2 = idx.first * _emb_dimension;
                     for(unsigned int d = 0; d < _emb_dimension; d++)
@@ -599,7 +578,7 @@ namespace hdi{
                 hp_scalar_type q_ij_1;
                 ind1 = n * _emb_dimension;
                 for(auto idx: sparse_matrix._symmetric_matrix[n]) {
-                    // Compute pairwise sq_distance and Q-value
+                    // Compute pairwise D and Q-value
                     q_ij_1 = 1.0;
                     ind2 = idx.first * _emb_dimension;
                     for(unsigned int d = 0; d < _emb_dimension; d++)
