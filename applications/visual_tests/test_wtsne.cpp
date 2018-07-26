@@ -92,94 +92,7 @@ int main(int argc, char *argv[]) {
 		color_per_digit.push_back(qRgb(20, 20, 20));
 		color_per_digit.push_back(qRgb(0, 150, 255));
 
-		//      const int num_pics(10000);
-		//      const int num_dimensions(784);
 
-		//      std::ifstream file_data(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-10k.bin", std::ios::in|std::ios::binary);
-		//      std::ifstream file_labels(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-10k-labels.bin", std::ios::in|std::ios::binary);
-		//    
-		//if (!file_labels.is_open()){
-		//          throw std::runtime_error("label file cannot be found");
-		//      }
-		//      if (!file_data.is_open()){
-		//          throw std::runtime_error("data file cannot be found");
-		//      }
-
-		//      //{//removing headers
-		//      //    int32_t appo;
-		//      //    file_labels.read((char*)&appo,4);
-		//      //    file_labels.read((char*)&appo,4);
-		//      //    file_data.read((char*)&appo,4);
-		//      //    file_data.read((char*)&appo,4);
-		//      //    file_data.read((char*)&appo,4);
-		//      //    file_data.read((char*)&appo,4);
-		//      //}
-
-		//      hdi::data::PanelData<scalar_type> panel_data;
-		//      {//initializing panel data
-		//          for(int j = 0; j < 28; ++j){
-		//              for(int i = 0; i < 28; ++i){
-		//                  panel_data.addDimension(std::make_shared<hdi::data::PixelData>(hdi::data::PixelData(j,i,28,28)));
-		//              }
-		//          }
-		//          panel_data.initialize();
-		//      }
-
-
-		//      std::vector<QImage> images;
-		//      std::vector<std::vector<scalar_type> > input_data;
-		//      std::vector<unsigned int> labels;
-
-		//      {//reading data
-		//          images.reserve(num_pics);
-		//          input_data.reserve(num_pics);
-		//          labels.reserve(num_pics);
-
-		//          for(int i = 0; i < num_pics; ++i){
-		//              unsigned char label;
-		//              file_labels.read((char*)&label,1);
-		//              labels.push_back(label);
-
-		//              //still some pics to read for this digit
-		//              input_data.push_back(std::vector<scalar_type>(num_dimensions));
-		//              images.push_back(QImage(28,28,QImage::Format::Format_ARGB32));
-		//              const int idx = int(input_data.size()-1);
-		//              for(int i = 0; i < num_dimensions; ++i){
-		//                  unsigned char pixel;
-		//                  file_data.read((char*)&pixel,1);
-		//                  const scalar_type intensity(255.f - pixel);
-		//                  input_data[idx][i] = intensity;
-		//                  images[idx].setPixel(i%28,i/28,qRgb(intensity,intensity,intensity));
-		//              }
-		//          }
-
-		//          {
-		//              //moving a digit at the beginning digits of the vectors
-		//              const int digit_to_be_moved = 1;
-		//              int idx_to_be_swapped = 0;
-		//              for(int i = 0; i < images.size(); ++i){
-		//                  if(labels[i] == digit_to_be_moved){
-		//                      std::swap(images[i],		images[idx_to_be_swapped]);
-		//                      std::swap(input_data[i],	input_data[idx_to_be_swapped]);
-		//                      std::swap(labels[i],		labels[idx_to_be_swapped]);
-		//                      ++idx_to_be_swapped;
-		//                  }
-		//              }
-		//          }
-		//          const int digit_to_be_selected = 4;
-		//          for(int i = 0; i < images.size(); ++i){
-		//              panel_data.addDataPoint(std::make_shared<hdi::data::ImageData>(hdi::data::ImageData(images[i])), input_data[i]);
-		//              if(labels[i] == digit_to_be_selected){
-		//                  //panel_data.getFlagsDataPoints()[i] = hdi::data::PanelData<scalar_type>::Selected;
-		//              }
-		//          }
-		//      }
-
-		//hdi::utils::secureLog(&log,"Data loaded...");
-
-		///////////////////////////////////////////////////////////////////
-		///////////////////////////////////////////////////////////////////
-		///////////////////////////////////////////////////////////////////
 
 		weighted_tsne* wt = new weighted_tsne();
 
@@ -190,7 +103,7 @@ int main(int argc, char *argv[]) {
 		int iterations = 1000;
 
 		wt->tSNE.setTheta(0.5); // Barnes-hut
-		//wt->tSNE.setTheta(0); // Exact
+		//wt->tSNE.setTheta(0.01); // Exact
 
 		wt->tSNE_param._mom_switching_iter = 250;
 		wt->tSNE_param._remove_exaggeration_iter = 250;
@@ -239,7 +152,7 @@ int main(int argc, char *argv[]) {
 		//std::vector<weighted_tsne::scalar_type> selectionEmbeddingEnd = { 0, 0 };
 
 
-		//wt->set_coordinates(selectedIndices, selectionEmbeddingFinal);
+		//wt->tSNE.setEmbeddingCoordinates(selectedIndices, selectionEmbeddingFinal);
 		////wt->set_coordinates(selectedIndices, std::vector<float>{ 0,0 });
 		//wt->set_locked_points(selectedIndices);
 
@@ -295,6 +208,9 @@ int main(int argc, char *argv[]) {
 		//wt->tSNE.connection_weights = s;
 
 		wt->tSNE.weights = selected_high;
+		//wt->tSNE.setEmbeddingCoordinates(selectedIndices, selectionEmbeddingFinal);
+		//wt->tSNE.setLockedPoints(selectedIndices);
+
 		//wt->tSNE.setWeights(one_weights, one_weights, one_weights, one_weights);
 
 		/*
@@ -385,20 +301,23 @@ int main(int argc, char *argv[]) {
 		{
 			hdi::utils::ScopedTimer<float, hdi::utils::Milliseconds> timer(iteration_time);
 
-			while (iter<1000) {
+			while (iter < 1000) {
 				wt->do_iteration();
 
 				// Selection growing
 				float alpha = (iter - 250) / 300.0;
 				alpha = alpha > 1.0 ? 1.0 : (alpha < 0.0 ? 0.0 : alpha);
 
+				//wt->tSNE.setEmbeddingCoordinates(selectedIndices, selectionEmbeddingFinal);
+
 				// Set point location at every iteration < 800
 				//wt->lerp(selectionEmbeddingStart, selectionEmbeddingFinal, selectionEmbeddingCurrent, alpha);
-				//wt->set_coordinates(selectedIndices, selectionEmbeddingCurrent);
+				//wt->tSNE.setEmbeddingCoordinates(selectedIndices, selectionEmbeddingCurrent);
 
 				// Lerp the weights
 				//wt->lerp(one_weights, selected_high, lerp_weights, alpha);
-				//wt->tSNE.setWeights(lerp_weights, lerp_weights, one_weights, one_weights);
+				//wt->tSNE.weights = lerp_weights;
+
 				if (iter == 999) {
 					//int k = 200;
 					//std::vector<int> highDimNeighbours;

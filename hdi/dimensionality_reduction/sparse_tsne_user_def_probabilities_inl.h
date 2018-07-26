@@ -137,6 +137,8 @@ namespace hdi{
         _gradient.resize(size*params._embedding_dimensionality,0);
         _previous_gradient.resize(size*params._embedding_dimensionality,0);
         _gain.resize(size*params._embedding_dimensionality,1);
+
+		_locked_points.resize(size, false);
       }
       
 	  // If no weights are set, make then all 1
@@ -171,6 +173,8 @@ namespace hdi{
         _gradient.resize(size*params._embedding_dimensionality,0);
         _previous_gradient.resize(size*params._embedding_dimensionality,0);
         _gain.resize(size*params._embedding_dimensionality,1);
+
+		_locked_points.resize(size, false);
       }
 
 	  // If no weights are set, make then all 1
@@ -406,6 +410,9 @@ namespace hdi{
     template <typename scalar, typename sparse_scalar_matrix>
     void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::updateTheEmbedding(double mult){
       for(int i = 0; i < _gradient.size(); ++i){
+		  int point_index = i / 2;
+		  if (_locked_points[point_index]) continue;
+
         _gain[i] = static_cast<scalar_type>((sign(_gradient[i]) != sign(_previous_gradient[i])) ? (_gain[i] + .2) : (_gain[i] * .8));
         if(_gain[i] < _params._minimum_gain){
           _gain[i] = static_cast<scalar_type>(_params._minimum_gain);
@@ -417,11 +424,11 @@ namespace hdi{
       }
 
       //MAGIC NUMBER
-      if(exaggerationFactor() > 1.2){
-        _embedding->scaleIfSmallerThan(0.1);
-      }else{
-        _embedding->zeroCentered();
-      }
+      //if(exaggerationFactor() > 1.2){
+      //  _embedding->scaleIfSmallerThan(0.1);
+      //}else{
+      //  _embedding->zeroCentered();
+      //}
 
       ++_iteration;
     }
@@ -457,7 +464,31 @@ namespace hdi{
 			}
 		}
     }
+
+	template<typename scalar, typename sparse_scalar_matrix>
+	void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::setEmbeddingCoordinates(std::vector<int> point_indices, std::vector<scalar_type> coordinates)
+	{
+		const int dim = _params._embedding_dimensionality;
+
+		// For every point_index, there is "dim" coordinates
+		for (int i = 0; i < point_indices.size(); i++) {
+			for (int j = 0; j < dim; j++) {
+				(*_embedding_container)[point_indices[i] * dim + j] = coordinates[i * dim + j];
+			}
+		}
+	}
+
+	template <typename scalar, typename sparse_scalar_matrix>
+	void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::setLockedPoints(std::vector<int> indices) {
+		_locked_points.resize(getNumberOfDataPoints(), false);
+
+		for (int index : indices) {
+			_locked_points[index] = true;
+		}
+	}
   }
+
+
 }
 #endif 
 

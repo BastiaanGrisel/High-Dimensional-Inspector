@@ -436,7 +436,7 @@ namespace hdi{
 		//hp_scalar_type mult = cum_size * D; // unweighted
 
 		hp_scalar_type mult = cum_weight * D; // Connection weight as the weight of point j (assymetrical)
-		//hp_scalar_type mult = (0.5 * cum_size * weights[point_index] + 0.5 * cum_weight) * D; // Weight as average of two points (symmetrical)
+		//hp_scalar_type mult = (0.5*cum_size*weights[point_index] + 0.5*cum_weight) * D; // Weight as average of two points (symmetrical)
         sum_Q += mult;
 
         mult *= D;

@@ -91,16 +91,6 @@ std::vector<int> intersection(std::vector<int> &v1, std::vector<int> &v2)
 	return v3;
 }
 
-void weighted_tsne::set_locked_points(std::vector<int> indices)
-{
-	//tSNE.setLockedPoints(indices);
-}
-
-void weighted_tsne::set_coordinates(std::vector<int> indices, std::vector<scalar_type> coordinates)
-{
-	//tSNE.setEmbeddingCoordinates(indices, coordinates);
-}
-
 void weighted_tsne::compute_neighbours(std::vector<float> data, int N, int d, int k, std::vector<int> &res) {
 
 	std::vector<weighted_tsne::scalar_type> distances_squared;

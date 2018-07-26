@@ -207,6 +207,7 @@ namespace hdi{
 
 		  //hp_scalar_type weight = 0.5 * (weights[j] + weights[elem.first]);
 		  hp_scalar_type weight = weights[elem.first];
+		  //hp_scalar_type weight = 1;
 
           // Sum positive force
           for(unsigned int d = 0; d < _emb_dimension; d++)
