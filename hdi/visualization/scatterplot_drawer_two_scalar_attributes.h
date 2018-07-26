@@ -60,7 +60,7 @@ namespace hdi{
       void setZCoordSelection(scalar_type z_coord_selection){_z_coord_selection = z_coord_selection;}
       void setSelectionColor(color_type selection_color){_selection_color = selection_color;}
 
-      void setColors(std::array<color_type,4> colors){_colors = colors;}
+      void setColors(std::vector<color_type> colors){_colors = colors;}
       
       scalar_type pointSize()const{ return _point_size;}
       scalar_type zCoord()const{return _z_coord;}
@@ -116,7 +116,7 @@ namespace hdi{
       scalar_type _alpha;
       scalar_type _z_coord;
       scalar_type _z_coord_selection;
-      std::array<color_type,4> _colors;
+      std::vector<color_type> _colors;
     };
 
   }

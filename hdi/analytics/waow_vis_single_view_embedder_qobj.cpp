@@ -161,11 +161,11 @@ namespace hdi{
       _canvas->setSelectionColor(qRgb(200,200,200));
       _canvas->show();
 
-      _limits_A_2D = std::vector<scalar_type>{0.1,0.9,0.1,0.9};
-      _limits_A_1D = std::vector<scalar_type>{1,1.2,0.1,0.9};
-      _limits_B_2D = std::vector<scalar_type>{2.1,2.9,0.1,0.9};
-      _limits_B_1D = std::vector<scalar_type>{1.7,1.75,0.1,0.9};
-      _limits_B_Text = std::vector<scalar_type>{1.65,2.0,0.08,0.92};
+      _limits_A_2D = std::vector<scalar_type>{0.1f,0.9f,0.1f,0.9f};
+      _limits_A_1D = std::vector<scalar_type>{1.0f,1.2f,0.1f,0.9f};
+      _limits_B_2D = std::vector<scalar_type>{2.1f,2.9f,0.1f,0.9f};
+      _limits_B_1D = std::vector<scalar_type>{1.7f,1.75f,0.1f,0.9f};
+      _limits_B_Text = std::vector<scalar_type>{1.65f,2.0f,0.08f,0.92f};
 
       {// initializing the equalizers
         _eq_A_1D_to_2D.initialize(&_embedding_A_1D,&_embedding_A_2D);
