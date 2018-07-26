@@ -139,9 +139,7 @@ namespace hdi{
 				_gain.resize(size*params._embedding_dimensionality,1);
 
 				_attr_weights_avg.resize(size, 1);
-				_attr_weights_all.resize(size, 1);
 				_rep_weights_avg.resize(size, 1);
-				_rep_weights_all.resize(size, 1);
 
 				connection_weights.resize(size);
 
@@ -177,9 +175,7 @@ namespace hdi{
                 _gain.resize(size*params._embedding_dimensionality,1);
 
 				_attr_weights_avg.resize(size, 1);
-				_attr_weights_all.resize(size, 1);
 				_rep_weights_avg.resize(size, 1);
-				_rep_weights_all.resize(size, 1);
 
 				connection_weights.resize(size);
 
@@ -418,7 +414,7 @@ namespace hdi{
 
             std::vector<hp_scalar_type> sum_Q_subvalues(getNumberOfDataPoints(), 0);
 
-            #pragma omp parallel for
+            //#pragma omp parallel for
             for(int n = 0; n < getNumberOfDataPoints(); n++){
 				// Compute F_rep * Z for each data point
                 sptree.computeNonEdgeForcesOMP(n, _theta, negative_forces.data() + n * _params._embedding_dimensionality, sum_Q_subvalues[n]);
@@ -430,14 +426,7 @@ namespace hdi{
             }
 
 			for (int i = 0; i < _gradient.size(); i++) {
-				int point_index = i / 2;
-
-				//if (_locked_points[point_index] == false) {
-					_gradient[i] = ( 4* _attr_weights_all[point_index] * positive_forces[i] - 4*_rep_weights_all[point_index] * (negative_forces[i] / sum_Q)); // F_attr - ((F_rep * Z) / Z)
-	/*			}
-				else {
-					_gradient[i] = 0;
-				}*/
+				_gradient[i] = positive_forces[i] - (negative_forces[i] / sum_Q); // F_attr - ((F_rep * Z) / Z)
 			}
         }
 
@@ -481,9 +470,6 @@ namespace hdi{
 		void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::setWeights(std::vector<scalar_type> &attr_weights_avg, std::vector<scalar_type> &rep_weights_avg, std::vector<scalar_type> &attr_weights_all, std::vector<scalar_type> &rep_weights_all) {
 			_attr_weights_avg = attr_weights_avg;
 			_rep_weights_avg = rep_weights_avg;
-
-			_attr_weights_all = attr_weights_all;
-			_rep_weights_all = rep_weights_all;
 		}
 
 		template <typename scalar, typename sparse_scalar_matrix>

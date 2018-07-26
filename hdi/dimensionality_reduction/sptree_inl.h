@@ -437,18 +437,14 @@ namespace hdi{
             if(is_leaf || max_width / sqrt(D) < theta) {  // If we use this cell as a summary (recursion stop-condition)
 				// Compute and add t-SNE force between point and current node
 				//float weight = (cum_rep_weight + cum_size * rep_weights[point_index]) / 2.0; // Average
-				float weight = cum_rep_weight;
-
-				if (is_leaf && weight > 0) {
-					int x = 1;
-				}
 
 				D = 1.0 / (1.0 + D);
 				hp_scalar_type mult = cum_size * D;
+				//hp_scalar_type mult = cum_rep_weight * D;
 				sum_Q += mult;
 
 				mult *= D;
-				for (unsigned int d = 0; d < _emb_dimension; d++) neg_f[d] += weight * mult * distance[d];
+				for (unsigned int d = 0; d < _emb_dimension; d++) neg_f[d] += mult * distance[d];
 
             } else {
 

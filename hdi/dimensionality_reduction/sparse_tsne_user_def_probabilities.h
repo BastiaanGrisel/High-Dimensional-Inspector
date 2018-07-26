@@ -170,10 +170,6 @@ namespace hdi{
 			std::vector<scalar_type> _attr_weights_avg;
 			std::vector<scalar_type> _rep_weights_avg;
 
-			// Weight of connections from A to all B is w_a
-			std::vector<scalar_type> _attr_weights_all;
-			std::vector<scalar_type> _rep_weights_all;
-
 			// For each data point, specifies whether it is locked or not
 			std::vector<bool> _locked_points;
 
