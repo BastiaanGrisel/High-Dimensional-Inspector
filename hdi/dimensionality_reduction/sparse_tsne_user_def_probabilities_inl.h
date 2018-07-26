@@ -414,7 +414,7 @@ namespace hdi{
 
             std::vector<hp_scalar_type> sum_Q_subvalues(getNumberOfDataPoints(), 0);
 
-            //#pragma omp parallel for
+            #pragma omp parallel for
             for(int n = 0; n < getNumberOfDataPoints(); n++){
 				// Compute F_rep * Z for each data point
                 sptree.computeNonEdgeForcesOMP(n, _theta, negative_forces.data() + n * _params._embedding_dimensionality, sum_Q_subvalues[n]);

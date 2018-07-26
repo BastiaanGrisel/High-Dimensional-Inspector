@@ -57,6 +57,10 @@
 #include "weighted_tsne.h"
 
 int main(int argc, char *argv[]){
+
+	SetPriorityClass(GetCurrentProcess(), ABOVE_NORMAL_PRIORITY_CLASS);
+
+
     try{
         typedef float scalar_type;
 		typedef std::vector<hdi::data::MapMemEff<uint32_t, float>> sparse_scalar_matrix;
@@ -376,64 +380,70 @@ int main(int argc, char *argv[]){
         drawer.setPointSize(5);
         viewer.addDrawer(&drawer);
 
-        int iter = 0;
-        while(true){
-			wt->do_iteration();
+		int iter = 0;
 
-			// Selection growing
-			float alpha = (iter - 250) / 300.0;
-			alpha = alpha > 1.0 ? 1.0 : (alpha < 0.0 ? 0.0 : alpha);
+		{
+			hdi::utils::ScopedTimer<float, hdi::utils::Milliseconds> timer(iteration_time);
 
-			// Set point location at every iteration < 800
-			//wt->lerp(selectionEmbeddingStart, selectionEmbeddingFinal, selectionEmbeddingCurrent, alpha);
-			//wt->set_coordinates(selectedIndices, selectionEmbeddingCurrent);
+			while (iter<1000) {
+				wt->do_iteration();
 
-			// Lerp the weights
-			//wt->lerp(one_weights, selected_high, lerp_weights, alpha);
-			//wt->tSNE.setWeights(lerp_weights, lerp_weights, one_weights, one_weights);
-			if(iter == 1000) {
-				//int k = 200;
-				//std::vector<int> highDimNeighbours;
-				//std::vector<int> lowDimNeighbours;
+				// Selection growing
+				float alpha = (iter - 250) / 300.0;
+				alpha = alpha > 1.0 ? 1.0 : (alpha < 0.0 ? 0.0 : alpha);
 
-				//// highDimNeighbours, lowDimNeighbours, includes the point itself as its nearest neighbour
-				//wt->compute_neighbours(wt->data, N, input_dims, k, highDimNeighbours);
-				//wt->compute_neighbours(wt->embedding.getContainer(), N, output_dims, k, lowDimNeighbours);
+				// Set point location at every iteration < 800
+				//wt->lerp(selectionEmbeddingStart, selectionEmbeddingFinal, selectionEmbeddingCurrent, alpha);
+				//wt->set_coordinates(selectedIndices, selectionEmbeddingCurrent);
 
-				std::vector<float> errors(N, 0);
-				//wt->calculate_percentage_error(lowDimNeighbours, highDimNeighbours, per_errors, N, k + 1, k);
-				wt->calculate_kl_divergence(errors);
+				// Lerp the weights
+				//wt->lerp(one_weights, selected_high, lerp_weights, alpha);
+				//wt->tSNE.setWeights(lerp_weights, lerp_weights, one_weights, one_weights);
+				if (iter == 1000) {
+					//int k = 200;
+					//std::vector<int> highDimNeighbours;
+					//std::vector<int> lowDimNeighbours;
 
-				wt->write_csv(errors, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/errors.csv");
-			}
+					//// highDimNeighbours, lowDimNeighbours, includes the point itself as its nearest neighbour
+					//wt->compute_neighbours(wt->data, N, input_dims, k, highDimNeighbours);
+					//wt->compute_neighbours(wt->embedding.getContainer(), N, output_dims, k, lowDimNeighbours);
 
-            {//limits
-                std::vector<scalar_type> limits;
-                wt->embedding.computeEmbeddingBBox(limits,0.25);
-                auto tr = QVector2D(limits[1],limits[3]);
-                auto bl = QVector2D(limits[0],limits[2]);
-		/*		float lim = 15;
-				auto tr = QVector2D(lim, lim);
-				auto bl = QVector2D(-lim, -lim);*/
-                viewer.setTopRightCoordinates(tr);
-                viewer.setBottomLeftCoordinates(bl);
+					std::vector<float> errors(N, 0);
+					//wt->calculate_percentage_error(lowDimNeighbours, highDimNeighbours, per_errors, N, k + 1, k);
+					wt->calculate_kl_divergence(errors);
 
-			/*	if ((iter % 100) == 0) {
+					wt->write_csv(errors, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/errors.csv");
+				}
+
+				{//limits
+					std::vector<scalar_type> limits;
+					wt->embedding.computeEmbeddingBBox(limits, 0.25);
+					auto tr = QVector2D(limits[1], limits[3]);
+					auto bl = QVector2D(limits[0], limits[2]);
+					/*		float lim = 15;
+					auto tr = QVector2D(lim, lim);
+					auto bl = QVector2D(-lim, -lim);*/
+					viewer.setTopRightCoordinates(tr);
+					viewer.setBottomLeftCoordinates(bl);
+
+					/*	if ((iter % 100) == 0) {
 					hdi::utils::secureLogValue(&log, "tr1", limits[1]);
 					hdi::utils::secureLogValue(&log, "tr2", limits[3]);
-				}*/
-            }
+					}*/
+				}
 
 
-            if((iter%1) == 0){
-                viewer.updateGL();
-				hdi::utils::secureLogValue(&log, "Iter", iter);
-            }
+				if ((iter % 1) == 0) {
+					viewer.updateGL();
+					hdi::utils::secureLogValue(&log, "Iter", iter);
+				}
 
-			
-            QApplication::processEvents();
-            ++iter;
-        }
+				QApplication::processEvents();
+				++iter;
+			}
+		}
+
+		hdi::utils::secureLogValue(&log, "Average iteration time (ms): ", iteration_time / (float)iter);
 
         return app.exec();
     }
