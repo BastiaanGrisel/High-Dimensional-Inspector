@@ -1,7 +1,7 @@
 MACRO(ADD_PROJECT Name Sources MocSources)
     #MESSAGE( STATUS "${MocSources}")
   add_executable (${Name} ${Sources} ${MocSources})
-
+  
   target_link_libraries (${Name} hdianalytics)
   target_link_libraries (${Name} hdidimensionalityreduction)
   target_link_libraries (${Name} hdiclustering)
@@ -34,6 +34,7 @@ ENDMACRO()
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
+include_directories ("$ENV{ROARING_DIR}/include")
 include_directories ("${CMAKE_SOURCE_DIR}")
 include_directories ("${CMAKE_CURRENT_BINARY_DIR}/../../hdi/visualization")
 
@@ -79,3 +80,4 @@ ADD_PROJECT(pca_weigh_image pca_weigh_image.cpp "${Resources}")
 ADD_PROJECT(lda_image lda_image.cpp "${Resources}")
 ADD_PROJECT(dl_filter_viz_test dl_filter_viz_test.cpp "${Resources}")
 ADD_PROJECT(scalable_pcp_view_test scalable_pcp_view_test.cpp "${Resources}")
+ADD_PROJECT(test_wtsne test_wtsne.cpp "${Resources}")
