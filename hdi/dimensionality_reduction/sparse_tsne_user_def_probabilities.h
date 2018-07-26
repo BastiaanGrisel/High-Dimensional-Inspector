@@ -107,7 +107,7 @@ namespace hdi{
       //! Do an iteration of the gradient descent
       void doAnIteration(double mult = 1);
       //! Compute the Kullback Leibler divergence
-      double computeKullbackLeiblerDivergence();
+      void computeKullbackLeiblerDivergences(std::vector<scalar_type> &divergences);
 
       //! Set the current iterations
       void setIteration(unsigned int iteration){_iteration = iteration;}

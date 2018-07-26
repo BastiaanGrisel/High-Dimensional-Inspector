@@ -417,9 +417,35 @@ namespace hdi{
     }
 
     template <typename scalar, typename sparse_scalar_matrix>
-    double SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::computeKullbackLeiblerDivergence(){
-      assert(false);
-      return 0;
+    void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::computeKullbackLeiblerDivergences(std::vector<scalar_type> &divergences){
+		int n = getNumberOfDataPoints();
+
+		// Calculate Q distribution
+		computeLowDimensionalDistribution();
+		std::vector<scalar_type> Q = getDistributionQ();
+
+		// For each data point, calculate the KL-divergence
+		divergences.resize(getNumberOfDataPoints(), 0);
+
+		for (int i = 0; i < n; i++) {
+			// Calculate normalisation terms
+			double normP = 0;
+			for (auto &elem : _P[i]) {
+				normP += elem.second;
+			}
+
+			double normQ = 0;
+			for (int j = 0; j < n; j++) {
+				normQ += Q[i * n + j];
+			}
+
+			// Calculate KL-div
+			for (auto &elem : _P[i]) {
+				double pij = elem.second / normP; // idk maybe divide by N?
+				double qij = Q[i * n + elem.first] / normQ; // From data point i to data point elem.first
+				divergences[i] += pij * std::log(pij / qij); // std::log is the natural logarithm
+			}
+		}
     }
   }
 }
