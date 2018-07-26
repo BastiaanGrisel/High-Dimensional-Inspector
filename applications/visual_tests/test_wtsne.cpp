@@ -184,13 +184,13 @@ int main(int argc, char *argv[]) {
 		weighted_tsne* wt = new weighted_tsne();
 
 		// Set tSNE parameters
-		int N = 1000;
+		int N = 10000;
 		int input_dims = 784;
 		int output_dims = 2;
 		int iterations = 1000;
 
-		//wt->tSNE.setTheta(0.5); // Barnes-hut
-		wt->tSNE.setTheta(0); // Exact
+		wt->tSNE.setTheta(0.5); // Barnes-hut
+		//wt->tSNE.setTheta(0); // Exact
 
 		wt->tSNE_param._mom_switching_iter = 250;
 		wt->tSNE_param._remove_exaggeration_iter = 250;
@@ -200,10 +200,10 @@ int main(int argc, char *argv[]) {
 
 		// Load the entire dataset
 		std::vector<weighted_tsne::scalar_type> data;
-		wt->read_bin(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-1k.bin", N, input_dims, data);
+		wt->read_bin(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-10k.bin", N, input_dims, data);
 
 		std::vector<weighted_tsne::scalar_type> labels;
-		wt->read_bin(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-1k-labels.bin", N, 1, labels);
+		wt->read_bin(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-10k-labels.bin", N, 1, labels);
 
 		float iteration_time = 0;
 

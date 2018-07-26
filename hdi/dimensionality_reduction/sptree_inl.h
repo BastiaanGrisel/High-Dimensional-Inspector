@@ -150,6 +150,12 @@ namespace hdi{
       for(int d = 0; d < D; d++) mean_Y[d] /= (hp_scalar_type) N;
 
 	  weights = point_weights;
+	  num_data_points = N;
+
+	  // Calculate the sum of the weights
+	  sum_weights = 0;
+	  for (int i = 0; i < N; i++) 
+		  sum_weights += weights[i];
 
       // Construct SPTree
       hp_scalar_type* width = (hp_scalar_type*) malloc(D * sizeof(hp_scalar_type));
@@ -207,6 +213,8 @@ namespace hdi{
 	  
 	  if (inp_parent != NULL) {
 		  weights = inp_parent->weights;
+		  sum_weights = inp_parent->sum_weights;
+		  num_data_points = inp_parent->num_data_points;
 	  }
 
       boundary = new Cell(_emb_dimension);
@@ -425,8 +433,10 @@ namespace hdi{
 
         // Compute and add t-SNE force between point and current node
         D = 1.0 / (1.0 + D);
-		//hp_scalar_type mult = cum_size * D;
-		hp_scalar_type mult = cum_weight * D;
+		//hp_scalar_type mult = cum_size * D; // unweighted
+
+		hp_scalar_type mult = cum_weight * D; // Connection weight as the weight of point j (assymetrical)
+		//hp_scalar_type mult = (0.5 * cum_size * weights[point_index] + 0.5 * cum_weight) * D; // Weight as average of two points (symmetrical)
         sum_Q += mult;
 
         mult *= D;

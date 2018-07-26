@@ -113,6 +113,7 @@ namespace hdi{
 
 	  // Reference to the point weights
 	  scalar_type* weights;
+	  scalar_type sum_weights;
 
       // A buffer we use when doing force computations
       //hp_scalar_type* buff;
@@ -124,6 +125,7 @@ namespace hdi{
       unsigned int size;
 	  unsigned int cum_size;
 	  unsigned int cum_weight;
+	  unsigned int num_data_points;
 
       // Axis-aligned bounding box stored as a center with half-_emb_dimensions to represent the boundaries of this quad tree
       Cell* boundary;
@@ -200,12 +202,11 @@ namespace hdi{
           for(unsigned int d = 0; d < _emb_dimension; d++)
             q_ij_1 += buff[d] * buff[d];
 
-          hp_scalar_type p_ij = elem.second;
-          hp_scalar_type res = hp_scalar_type(p_ij) * multiplier / q_ij_1 / n;
+          hp_scalar_type p_ij = elem.second / n;
+          hp_scalar_type res = hp_scalar_type(p_ij) * multiplier / q_ij_1;
 
-
-		  // The weight of the connection between i and j (is the weight of j)
-		  float weight = weights[elem.first];
+		  //hp_scalar_type weight = 0.5 * (weights[j] + weights[elem.first]);
+		  hp_scalar_type weight = weights[elem.first];
 
           // Sum positive force
           for(unsigned int d = 0; d < _emb_dimension; d++)
