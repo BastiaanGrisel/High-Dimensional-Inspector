@@ -88,6 +88,7 @@ namespace hdi{
       //! Reset the class and remove all the data points
       void clear();
       
+	  std::vector<scalar_type> weights; // Container for point weights
 
       //! Get the position in the embedding for a data point
       void getEmbeddingPosition(scalar_vector_type& embedding_position, data_handle_type handle)const;

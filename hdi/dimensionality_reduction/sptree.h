@@ -111,6 +111,9 @@ namespace hdi{
       // Fixed constants
       static const unsigned int QT_NODE_CAPACITY = 1;
 
+	  // Reference to the point weights
+	  scalar_type* weights;
+
       // A buffer we use when doing force computations
       //hp_scalar_type* buff;
 
@@ -119,7 +122,8 @@ namespace hdi{
       unsigned int _emb_dimension;
       bool is_leaf;
       unsigned int size;
-      unsigned int cum_size;
+	  unsigned int cum_size;
+	  unsigned int cum_weight;
 
       // Axis-aligned bounding box stored as a center with half-_emb_dimensions to represent the boundaries of this quad tree
       Cell* boundary;
@@ -134,7 +138,7 @@ namespace hdi{
       unsigned int no_children;
 
     public:
-      SPTree(unsigned int D, scalar_type* inp_data, unsigned int N);
+	  SPTree(unsigned int D, scalar_type* inp_data, unsigned int N, scalar_type* point_weights);
     private:
       SPTree(unsigned int D, scalar_type* inp_data, hp_scalar_type* inp_corner, hp_scalar_type* inp_width);
       SPTree(unsigned int D, scalar_type* inp_data, unsigned int N, hp_scalar_type* inp_corner, hp_scalar_type* inp_width);
@@ -199,9 +203,13 @@ namespace hdi{
           hp_scalar_type p_ij = elem.second;
           hp_scalar_type res = hp_scalar_type(p_ij) * multiplier / q_ij_1 / n;
 
+
+		  // The weight of the connection between i and j (is the weight of j)
+		  float weight = weights[elem.first];
+
           // Sum positive force
           for(unsigned int d = 0; d < _emb_dimension; d++)
-            pos_f[ind1 + d] += res * buff[d] * multiplier; //(p_ij*q_j*mult) * (yi-yj)
+            pos_f[ind1 + d] += weight * res * buff[d] * multiplier; //(p_ij*q_j*mult) * (yi-yj)
         }
       }
 #ifdef __APPLE__

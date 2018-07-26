@@ -139,6 +139,11 @@ namespace hdi{
         _gain.resize(size*params._embedding_dimensionality,1);
       }
       
+	  // If no weights are set, make then all 1
+	  if (weights.size() != _P.size()) {
+		  weights.resize(_P.size(), 1);
+	  }
+
       utils::secureLogValue(_logger,"Number of data points",_P.size());
 
       computeHighDimensionalDistribution(probabilities);
@@ -167,6 +172,11 @@ namespace hdi{
         _previous_gradient.resize(size*params._embedding_dimensionality,0);
         _gain.resize(size*params._embedding_dimensionality,1);
       }
+
+	  // If no weights are set, make then all 1
+	  if (weights.size() != _P.size()) {
+		  weights.resize(_P.size(), 1);
+	  }
 
       utils::secureLogValue(_logger,"Number of data points",_P.size());
 
@@ -335,7 +345,7 @@ namespace hdi{
             const int idx = i*n + j;
             const double distance((*_embedding_container)[i * dim + d] - (*_embedding_container)[j * dim + d]);
             const double negative(_Q[idx] * _Q[idx] / _normalization_Q * distance);
-            _gradient[i * dim + d] += static_cast<scalar_type>(-4*negative);
+            _gradient[i * dim + d] += static_cast<scalar_type>(-4 * weights[j] * negative);
           }
         }
         for(auto& elem: _P[i]){
@@ -346,7 +356,7 @@ namespace hdi{
             double p_ij = elem.second/n;
             
             const double positive(p_ij * _Q[idx] * distance);
-            _gradient[i * dim + d] += static_cast<scalar_type>(4*exaggeration*positive);
+            _gradient[i * dim + d] += static_cast<scalar_type>(4 * exaggeration * weights[j] * positive);
           }
         }
       }
@@ -356,7 +366,7 @@ namespace hdi{
     void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::computeBarnesHutGradient(double exaggeration){
       typedef double hp_scalar_type;
 
-      SPTree<scalar_type> sptree(_params._embedding_dimensionality,_embedding->getContainer().data(),getNumberOfDataPoints());
+      SPTree<scalar_type> sptree(_params._embedding_dimensionality,_embedding->getContainer().data(),getNumberOfDataPoints(), weights.data());
 
       scalar_type sum_Q = .0;
       std::vector<hp_scalar_type> positive_forces(getNumberOfDataPoints()*_params._embedding_dimensionality);

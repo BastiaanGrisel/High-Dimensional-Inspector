@@ -135,7 +135,7 @@ namespace hdi{
 
     //! Default constructor for SPTree -- build tree, too!
     template <typename scalar_type>
-    SPTree<scalar_type>::SPTree(unsigned int D, scalar_type* inp_data, unsigned int N){
+    SPTree<scalar_type>::SPTree(unsigned int D, scalar_type* inp_data, unsigned int N, scalar_type* point_weights){
       // Compute mean, width, and height of current map (boundaries of SPTree)
       hp_scalar_type* mean_Y = (hp_scalar_type*) malloc(D * sizeof(hp_scalar_type)); for(unsigned int d = 0; d < D; d++) mean_Y[d] = .0;
       hp_scalar_type*  min_Y = (hp_scalar_type*) malloc(D * sizeof(hp_scalar_type)); for(unsigned int d = 0; d < D; d++)  min_Y[d] =  DBL_MAX;
@@ -148,6 +148,8 @@ namespace hdi{
         }
       }
       for(int d = 0; d < D; d++) mean_Y[d] /= (hp_scalar_type) N;
+
+	  weights = point_weights;
 
       // Construct SPTree
       hp_scalar_type* width = (hp_scalar_type*) malloc(D * sizeof(hp_scalar_type));
@@ -201,6 +203,11 @@ namespace hdi{
       is_leaf = true;
       size = 0;
       cum_size = 0;
+	  cum_weight = 0;
+	  
+	  if (inp_parent != NULL) {
+		  weights = inp_parent->weights;
+	  }
 
       boundary = new Cell(_emb_dimension);
       for(unsigned int d = 0; d < D; d++) boundary->setCorner(d, inp_corner[d]);
@@ -254,10 +261,20 @@ namespace hdi{
 
         // Online update of cumulative size and center-of-mass
         cum_size++;
-        hp_scalar_type mult1 = (hp_scalar_type) (cum_size - 1) / (hp_scalar_type) cum_size;
-        hp_scalar_type mult2 = 1.0 / (hp_scalar_type) cum_size;
-        for(unsigned int d = 0; d < _emb_dimension; d++) _center_of_mass[d] *= mult1;
-        for(unsigned int d = 0; d < _emb_dimension; d++) _center_of_mass[d] += mult2 * point[d];
+
+        //hp_scalar_type mult1 = (hp_scalar_type) (cum_size - 1) / (hp_scalar_type) cum_size;
+        //hp_scalar_type mult2 = 1.0 / (hp_scalar_type) cum_size;
+        //for(unsigned int d = 0; d < _emb_dimension; d++) _center_of_mass[d] *= mult1;
+        //for(unsigned int d = 0; d < _emb_dimension; d++) _center_of_mass[d] += mult2 * point[d];
+
+		// Weighted average as the center of mass
+		if (cum_weight + weights[new_index] > 0) { // Prevent division by zero. If all weights are zero, center of mass is irrelevant anyways.
+			for (unsigned int d = 0; d < _emb_dimension; d++)
+				_center_of_mass[d] = (_center_of_mass[d] * cum_weight + weights[new_index] * point[d]) / (cum_weight + weights[new_index]);
+		}
+
+		// Update the cumulative weight of the cell
+		cum_weight += weights[new_index];
 
         // If there is space in this quad tree and it is a leaf, add the object here
         if(is_leaf && size < QT_NODE_CAPACITY) {
@@ -408,7 +425,8 @@ namespace hdi{
 
         // Compute and add t-SNE force between point and current node
         D = 1.0 / (1.0 + D);
-        hp_scalar_type mult = cum_size * D;
+		//hp_scalar_type mult = cum_size * D;
+		hp_scalar_type mult = cum_weight * D;
         sum_Q += mult;
 
         mult *= D;
