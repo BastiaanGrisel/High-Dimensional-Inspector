@@ -320,6 +320,9 @@ namespace hdi{
           const double v = 1./(1.+euclidean_dist_sq);
           _Q[j*n + i] = static_cast<scalar_type>(v);
           _Q[i*n + j] = static_cast<scalar_type>(v);
+
+		  _Q[j*n + i] *= weights[i];
+		  _Q[i*n + j] *= weights[i];
         }
       }
 #ifdef __APPLE__
@@ -344,12 +347,14 @@ namespace hdi{
       }
 
       for(int i = 0; i < n; ++i){
+
         for(int j = 0; j < n; ++j){
           for(int d = 0; d < dim; ++d){
             const int idx = i*n + j;
             const double distance((*_embedding_container)[i * dim + d] - (*_embedding_container)[j * dim + d]);
+
             const double negative(_Q[idx] * _Q[idx] / _normalization_Q * distance);
-            _gradient[i * dim + d] += static_cast<scalar_type>(-4 * weights[j] * negative);
+            _gradient[i * dim + d] += static_cast<scalar_type>(-4 * negative);
           }
         }
         for(auto& elem: _P[i]){
@@ -358,9 +363,9 @@ namespace hdi{
             const int idx = i*n + j;
             const double distance((*_embedding_container)[i * dim + d] - (*_embedding_container)[j * dim + d]);
             double p_ij = elem.second/n;
-            
+ 
             const double positive(p_ij * _Q[idx] * distance);
-            _gradient[i * dim + d] += static_cast<scalar_type>(4 * exaggeration * weights[j] * positive);
+            _gradient[i * dim + d] += static_cast<scalar_type>(4 * exaggeration * positive);
           }
         }
       }
@@ -424,17 +429,17 @@ namespace hdi{
       }
 
       //MAGIC NUMBER
-      //if(exaggerationFactor() > 1.2){
-      //  _embedding->scaleIfSmallerThan(0.1);
-      //}else{
-      //  _embedding->zeroCentered();
-      //}
+      if(exaggerationFactor() > 1.2){
+        _embedding->scaleIfSmallerThan(0.1);
+      }else{
+        _embedding->zeroCentered();
+      }
 
       ++_iteration;
     }
 
     template <typename scalar, typename sparse_scalar_matrix>
-    void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::computeKullbackLeiblerDivergences(std::vector<scalar_type> &divergences){
+	void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::computeKullbackLeiblerDivergences(std::vector<scalar_type> &divergences) {
 		int n = getNumberOfDataPoints();
 
 		// Calculate Q distribution
@@ -444,18 +449,22 @@ namespace hdi{
 		// For each data point, calculate the KL-divergence
 		divergences.resize(getNumberOfDataPoints(), 0);
 
+		// Calculate normalisation terms
+		double normP = 0;
 		for (int i = 0; i < n; i++) {
-			// Calculate normalisation terms
-			double normP = 0;
 			for (auto &elem : _P[i]) {
 				normP += elem.second;
 			}
+		}
 
-			double normQ = 0;
+		double normQ = 0;
+		for (int i = 0; i < n; i++) {
 			for (int j = 0; j < n; j++) {
 				normQ += Q[i * n + j];
 			}
+		}
 
+		for (int i = 0; i < n; i++) {
 			// Calculate KL-div
 			for (auto &elem : _P[i]) {
 				double pij = elem.second / normP; // idk maybe divide by N?

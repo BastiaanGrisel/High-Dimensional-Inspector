@@ -97,13 +97,13 @@ int main(int argc, char *argv[]) {
 		weighted_tsne* wt = new weighted_tsne();
 
 		// Set tSNE parameters
-		int N = 10000;
+		int N = 1000;
 		int input_dims = 784;
 		int output_dims = 2;
-		int iterations = 1000;
+		int iterations = 1500;
 
-		wt->tSNE.setTheta(0.5); // Barnes-hut
-		//wt->tSNE.setTheta(0.01); // Exact
+		//wt->tSNE.setTheta(0.5); // Barnes-hut
+		wt->tSNE.setTheta(0); // Exact
 
 		wt->tSNE_param._mom_switching_iter = 250;
 		wt->tSNE_param._remove_exaggeration_iter = 250;
@@ -113,14 +113,15 @@ int main(int argc, char *argv[]) {
 
 		// Load the entire dataset
 		std::vector<weighted_tsne::scalar_type> data;
-		wt->read_bin(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-10k.bin", N, input_dims, data);
+		wt->read_bin(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-subset-538.bin", N, input_dims, data);
 
 		std::vector<weighted_tsne::scalar_type> labels;
-		wt->read_bin(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-10k-labels.bin", N, 1, labels);
+		wt->read_bin(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/CSV-to-BIN/datasets-bin/mnist-subset-538-labels.bin", N, 1, labels);
 
 		float iteration_time = 0;
 
 		wt->initialise_tsne(data, N, input_dims);
+
 
 		// Load selected points
 		std::vector<weighted_tsne::scalar_type> selectedIndicesFloat;
@@ -171,18 +172,31 @@ int main(int argc, char *argv[]) {
 
 
 		// Set weights
-		std::vector<float> one_weights(N, 1);
-		std::vector<float> zero_weights(N, 0);
-		std::vector<float> high_weights(N, 2);
-		std::vector<float> selected_high(N, 0);
-		std::vector<float> selected_higher(N, 0);
-		//std::vector<float> selected_high_extended(N, 0);
-		std::vector<float> lerp_weights(N, 1);
+		//std::vector<float> weights(N*N, 0);
 
-		for (int index : selectedIndices) {
-			selected_high[index] = 1;
-			selected_higher[index] = 1000;
-		}
+		//for (int index : selectedIndices) {
+		//	for (int j = 0; j < N; j++) {
+		//		if (index != j) {
+		//			weights[j * N + index] = 1.0; // The connection weight from j to i
+		//			weights[index * N + j] = 1.0; // The connection weight from i to j
+		//		}
+		//	}
+		//}
+
+
+		
+		//std::vector<float> one_weights(N, 1);
+		//std::vector<float> zero_weights(N, 0);
+		//std::vector<float> high_weights(N, 2);
+		//std::vector<float> selected_high(N, 0);
+		//std::vector<float> selected_higher(N, 0);
+		////std::vector<float> selected_high_extended(N, 0);
+		//std::vector<float> lerp_weights(N, 1);
+
+		//for (int index : selectedIndices) {
+		//	selected_high[index] = 1;
+		//	selected_higher[index] = 1000;
+		//}
 
 		/*	for (int index : selectedIndicesWithNeighbours) {
 		selected_high_extended[index] = 2;
@@ -207,7 +221,37 @@ int main(int argc, char *argv[]) {
 
 		//wt->tSNE.connection_weights = s;
 
-		wt->tSNE.weights = selected_high;
+
+		//float normalisation_weights = 0;
+
+		//for (int k = 0; k < N; k++) {
+		//	for (int l = 0; l < N; l++) {
+		//		//if (k != l) {
+		//		//normalisation_weights += 0.5 * selected_high[k] + 0.5 * selected_high[l];
+		//		normalisation_weights += selected_high[k];
+		//		//}
+		//	}
+		//}
+
+		std::vector<float> weights(N*N, 0.1);
+
+		for (int i : selectedIndices) {
+			weights[i] = 1;
+		}
+
+		float weight_sum = 0;
+
+		for (int i = 0; i < weights.size(); i++) {
+				weight_sum += weights[i];
+		}
+
+		std::cout << weight_sum;
+
+		//system("pause");
+
+		wt->tSNE.weights = weights;
+		wt->tSNE.weights_normalisation = weight_sum;
+
 		//wt->tSNE.setEmbeddingCoordinates(selectedIndices, selectionEmbeddingFinal);
 		//wt->tSNE.setLockedPoints(selectedIndices);
 
@@ -301,7 +345,7 @@ int main(int argc, char *argv[]) {
 		{
 			hdi::utils::ScopedTimer<float, hdi::utils::Milliseconds> timer(iteration_time);
 
-			while (iter < 1000) {
+			while (iter < iterations) {
 				wt->do_iteration();
 
 				// Selection growing
@@ -318,7 +362,7 @@ int main(int argc, char *argv[]) {
 				//wt->lerp(one_weights, selected_high, lerp_weights, alpha);
 				//wt->tSNE.weights = lerp_weights;
 
-				if (iter == 999) {
+				if (iter == iterations - 1) {
 					//int k = 200;
 					//std::vector<int> highDimNeighbours;
 					//std::vector<int> lowDimNeighbours;

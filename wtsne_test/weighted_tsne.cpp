@@ -44,7 +44,7 @@ int weighted_tsne::initialise_tsne(std::wstring data_path, int num_dps, int num_
 		float data_loading_time = 0;
 
 		//Input
-		data.resize(num_dps * num_dps);
+		data.resize(num_dps * num_dimensions);
 
 		{
 			hdi::utils::ScopedTimer<float, hdi::utils::Seconds> timer(data_loading_time);
@@ -95,8 +95,8 @@ void weighted_tsne::compute_neighbours(std::vector<float> data, int N, int d, in
 
 	std::vector<weighted_tsne::scalar_type> distances_squared;
 	hdi::dr::HDJointProbabilityGenerator<weighted_tsne::scalar_type>::Parameters temp_prob_gen_param;
-	temp_prob_gen_param._perplexity = k;
-	temp_prob_gen_param._perplexity_multiplier = 1;
+	//temp_prob_gen_param._perplexity = k;
+	//temp_prob_gen_param._perplexity_multiplier = 1;
 
 	// computeHighDimensionalDistances includes the point itself as its nearest neighbour (returns k+1 neighbours)
 	//prob_gen.computeHighDimensionalDistances(data.data(), d, N, distances_squared, res, temp_prob_gen_param);

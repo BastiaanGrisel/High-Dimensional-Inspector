@@ -89,6 +89,7 @@ namespace hdi{
       void clear();
       
 	  std::vector<scalar_type> weights; // Container for point weights
+	  scalar_type weights_normalisation; // Normalisation term for weights
 	  void setEmbeddingCoordinates(std::vector<int> point_indices, std::vector<scalar_type> coordinates);
 
 	  // For each data point, specifies whether it is locked or not
