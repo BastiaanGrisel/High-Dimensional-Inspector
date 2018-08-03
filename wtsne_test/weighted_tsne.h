@@ -59,6 +59,7 @@ public:
 	
 	int read_csv(std::wstring file_path, int N, int d, std::vector<weighted_tsne::scalar_type> &out);
 	void write_csv(std::vector<float> data, int N, int output_dims, std::string filename);
+	void write_csv(std::vector<double> data, int N, int output_dims, std::string filename);
 
 	void lerp(std::vector<float> from, std::vector<float> to, std::vector<float> &res, float alpha);
 };

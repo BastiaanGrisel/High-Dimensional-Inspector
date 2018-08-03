@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
 		int N = 1000;
 		int input_dims = 784;
 		int output_dims = 2;
-		int iterations = 1500;
+		int iterations = 2000;
 
 		//wt->tSNE.setTheta(0.5); // Barnes-hut
 		wt->tSNE.setTheta(0); // Exact
@@ -122,130 +122,44 @@ int main(int argc, char *argv[]) {
 
 		wt->initialise_tsne(data, N, input_dims);
 
+		// Settings
+		int selectedIndex = 64;
 
-		// Load selected points
-		std::vector<weighted_tsne::scalar_type> selectedIndicesFloat;
+		std::vector<int> selectedIndices = { selectedIndex };
 
-		//int N_selected = 994;
-		//wt->read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/labels-9-994.csv", N_selected, 1, selectedIndicesFloat);
+		auto P = wt->tSNE.getDistributionP();
 
-		//int N_selected = 839;
-		//wt->read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/mnist-10k-selection-358-839.csv", N_selected, 1, selectedIndicesFloat);
-
-		//std::vector<int> selectedIndices(selectedIndicesFloat.begin(), selectedIndicesFloat.end());
-
-		//std::vector<weighted_tsne::scalar_type> selectionEmbeddingFinal;
-		//wt->read_csv(L"C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding-selection.csv", N_selected, output_dims, selectionEmbeddingFinal);
-		//std::vector<weighted_tsne::scalar_type> selectionEmbeddingStart(selectionEmbeddingFinal.size());
-		//std::vector<weighted_tsne::scalar_type> selectionEmbeddingCurrent(selectionEmbeddingFinal.size());
-
-		//for (int i = 0; i < selectionEmbeddingStart.size(); i++) {
-		//	selectionEmbeddingStart[i] = 0.0001f * selectionEmbeddingFinal[i];
-		//	selectionEmbeddingFinal[i] = 0.2f * selectionEmbeddingFinal[i];
-
-		//	//if (i % 1 == 0) {
-		//	//	selectionEmbeddingStart[i] += 1.0;
-		//	//}
-		//}
-
-		std::vector<int> selectedIndices = { 4 };
-		//std::vector<weighted_tsne::scalar_type> selectionEmbeddingStart = { 0, 0 };
-		//std::vector<weighted_tsne::scalar_type> selectionEmbeddingEnd = { 0, 0 };
-
-
-		//wt->tSNE.setEmbeddingCoordinates(selectedIndices, selectionEmbeddingFinal);
-		////wt->set_coordinates(selectedIndices, std::vector<float>{ 0,0 });
-		//wt->set_locked_points(selectedIndices);
-
-
-		// Add nearest neighbours to selection
-		//int k = 50;
-		//std::vector<int> nearestNeighbours;
-		//wt->compute_neighbours(data, N, input_dims, k, nearestNeighbours);
-
-		//std::set<int> selectedIndicesWithNeighbours;
-		//for (int index : selectedIndices) {
-		//	for (int i = 0; i < k; i++) {
-		//		selectedIndicesWithNeighbours.insert(nearestNeighbours[index * (k + 1) + i]);
-		//	}
-		//}
-
-
-		// Set weights
-		//std::vector<float> weights(N*N, 0);
-
-		//for (int index : selectedIndices) {
-		//	for (int j = 0; j < N; j++) {
-		//		if (index != j) {
-		//			weights[j * N + index] = 1.0; // The connection weight from j to i
-		//			weights[index * N + j] = 1.0; // The connection weight from i to j
-		//		}
-		//	}
-		//}
-
-
-		
-		//std::vector<float> one_weights(N, 1);
-		//std::vector<float> zero_weights(N, 0);
-		//std::vector<float> high_weights(N, 2);
-		//std::vector<float> selected_high(N, 0);
-		//std::vector<float> selected_higher(N, 0);
-		////std::vector<float> selected_high_extended(N, 0);
-		//std::vector<float> lerp_weights(N, 1);
-
-		//for (int index : selectedIndices) {
-		//	selected_high[index] = 1;
-		//	selected_higher[index] = 1000;
-		//}
-
-		/*	for (int index : selectedIndicesWithNeighbours) {
-		selected_high_extended[index] = 2;
+		for (auto elem : P[selectedIndex]) {
+			if (elem.second > 0.004) {
+				selectedIndices.push_back(elem.first);
+			}
 		}
-		*/
-		// Weight falloff
-		//std::vector<float> weights_falloff;
-		//wt->compute_weight_falloff(data, N, input_dims, selectedIndices, 1000, weights_falloff);
-		//for (int i = 0; i < weights_falloff.size(); i++) {
-		//	weights_falloff[i] = weights_falloff[i];
-		//}
+		
 
-		//sparse_scalar_matrix s;
-		//s.resize(N);
+		hdi::utils::secureLogValue(&log, "Number of selected indices", selectedIndices.size());
 
-		//for (int index : selectedIndices) {
-		//	for (int i = 0; i < N; i++) {
-		//		//s[index][i] = 1;
-		//		s[i][index] = 1;
-		//	}
-		//}
-
-		//wt->tSNE.connection_weights = s;
+		std::vector<float> selectedIndicesFloat(selectedIndices.begin(), selectedIndices.end());
+		wt->write_csv(selectedIndicesFloat, selectedIndices.size(), 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/selection.csv");
 
 
-		//float normalisation_weights = 0;
-
-		//for (int k = 0; k < N; k++) {
-		//	for (int l = 0; l < N; l++) {
-		//		//if (k != l) {
-		//		//normalisation_weights += 0.5 * selected_high[k] + 0.5 * selected_high[l];
-		//		normalisation_weights += selected_high[k];
-		//		//}
-		//	}
-		//}
-
-		std::vector<float> weights(N*N, 0.1);
+		std::vector<float> weights(N*N, 0);
 
 		for (int i : selectedIndices) {
-			weights[i] = 1;
+			for (int j = 0; j < N; j++) {
+				weights[i * N + j] = 1;
+				weights[j * N + i] = 1;
+			}
 		}
 
-		float weight_sum = 0;
+		double weight_sum = 0;
 
 		for (int i = 0; i < weights.size(); i++) {
-				weight_sum += weights[i];
+			weight_sum += weights[i];
 		}
 
-		std::cout << weight_sum;
+		//weight_sum = weight_sum / (N * ((double)N - 1.0) / 2);
+
+		//std::cout << weight_sum;
 
 		//system("pause");
 
@@ -371,12 +285,14 @@ int main(int argc, char *argv[]) {
 					//wt->compute_neighbours(wt->data, N, input_dims, k, highDimNeighbours);
 					//wt->compute_neighbours(wt->embedding.getContainer(), N, output_dims, k, lowDimNeighbours);
 
-					std::vector<float> errors(N, 0);
+					std::vector<double> errors(N, 0);
 					//wt->calculate_percentage_error(lowDimNeighbours, highDimNeighbours, per_errors, N, k + 1, k);
 					wt->tSNE.computeKullbackLeiblerDivergences(errors);
 
 					wt->write_csv(errors, N, 1, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/errors.csv");
 				}
+
+				wt->write_csv(wt->embedding.getContainer(), N, output_dims, "C:/Users/basti/Google Drive/Learning/Master Thesis/ThesisDatasets/Generated/embedding.csv");
 
 				{//limits
 					std::vector<scalar_type> limits;

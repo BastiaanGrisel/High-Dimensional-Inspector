@@ -321,8 +321,8 @@ namespace hdi{
           _Q[j*n + i] = static_cast<scalar_type>(v);
           _Q[i*n + j] = static_cast<scalar_type>(v);
 
-		  _Q[j*n + i] *= weights[i];
-		  _Q[i*n + j] *= weights[i];
+		  //_Q[j*n + i] *= weights[i];
+		  //_Q[i*n + j] *= weights[i];
         }
       }
 #ifdef __APPLE__
@@ -353,7 +353,7 @@ namespace hdi{
             const int idx = i*n + j;
             const double distance((*_embedding_container)[i * dim + d] - (*_embedding_container)[j * dim + d]);
 
-            const double negative(_Q[idx] * _Q[idx] / _normalization_Q * distance);
+            const double negative((double) weights[i * n + j] / weights_normalisation * _Q[idx] * _Q[idx] / _normalization_Q * distance);
             _gradient[i * dim + d] += static_cast<scalar_type>(-4 * negative);
           }
         }
@@ -364,7 +364,7 @@ namespace hdi{
             const double distance((*_embedding_container)[i * dim + d] - (*_embedding_container)[j * dim + d]);
             double p_ij = elem.second/n;
  
-            const double positive(p_ij * _Q[idx] * distance);
+            const double positive((double) weights[i * n + j] / weights_normalisation * p_ij * _Q[idx] * distance);
             _gradient[i * dim + d] += static_cast<scalar_type>(4 * exaggeration * positive);
           }
         }
@@ -439,7 +439,7 @@ namespace hdi{
     }
 
     template <typename scalar, typename sparse_scalar_matrix>
-	void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::computeKullbackLeiblerDivergences(std::vector<scalar_type> &divergences) {
+	void SparseTSNEUserDefProbabilities<scalar, sparse_scalar_matrix>::computeKullbackLeiblerDivergences(std::vector<double> &divergences) {
 		int n = getNumberOfDataPoints();
 
 		// Calculate Q distribution
@@ -457,18 +457,18 @@ namespace hdi{
 			}
 		}
 
-		double normQ = 0;
-		for (int i = 0; i < n; i++) {
-			for (int j = 0; j < n; j++) {
-				normQ += Q[i * n + j];
-			}
-		}
+		//double normQ = 0;
+		//for (int i = 0; i < n; i++) {
+		//	for (int j = 0; j < n; j++) {
+		//		normQ += Q[i * n + j];
+		//	}
+		//}
 
 		for (int i = 0; i < n; i++) {
 			// Calculate KL-div
 			for (auto &elem : _P[i]) {
-				double pij = elem.second / normP; // idk maybe divide by N?
-				double qij = Q[i * n + elem.first] / normQ; // From data point i to data point elem.first
+				double pij = (double) elem.second / n; // idk maybe divide by N?
+				double qij = (double) Q[i * n + elem.first] / (double) _normalization_Q; // From data point i to data point elem.first
 				divergences[i] += pij * std::log(pij / qij); // std::log is the natural logarithm
 			}
 		}

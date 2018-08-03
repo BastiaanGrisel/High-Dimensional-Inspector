@@ -189,6 +189,28 @@ void weighted_tsne::write_csv(std::vector<float> data, int N, int output_dims, s
 	out_file2.close();
 }
 
+void weighted_tsne::write_csv(std::vector<double> data, int N, int output_dims, std::string filename) {
+
+	std::ofstream out_file2(filename);
+
+	for (int i = 0; i < N; i++) {
+		std::string line = "";
+
+		for (int d = 0; d < output_dims; d++) {
+			int index = i * output_dims + d;
+			line += std::to_string(data[index]);
+
+			if (d < (output_dims - 1)) {
+				line += ",";
+			}
+		}
+
+		out_file2 << line << std::endl;
+	}
+
+	out_file2.close();
+}
+
 
 void weighted_tsne::lerp(std::vector<float> from, std::vector<float> to, std::vector<float> &res, float alpha) {
 	res.resize(from.size());

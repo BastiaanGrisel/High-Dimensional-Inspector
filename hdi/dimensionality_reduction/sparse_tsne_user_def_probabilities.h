@@ -89,7 +89,7 @@ namespace hdi{
       void clear();
       
 	  std::vector<scalar_type> weights; // Container for point weights
-	  scalar_type weights_normalisation; // Normalisation term for weights
+	  double weights_normalisation = 1; // Normalisation term for weights
 	  void setEmbeddingCoordinates(std::vector<int> point_indices, std::vector<scalar_type> coordinates);
 
 	  // For each data point, specifies whether it is locked or not
@@ -114,7 +114,7 @@ namespace hdi{
       //! Do an iteration of the gradient descent
       void doAnIteration(double mult = 1);
       //! Compute the Kullback Leibler divergence
-      void computeKullbackLeiblerDivergences(std::vector<scalar_type> &divergences);
+      void computeKullbackLeiblerDivergences(std::vector<double> &divergences);
 
       //! Set the current iterations
       void setIteration(unsigned int iteration){_iteration = iteration;}
